@@ -1,6 +1,6 @@
 {
   "name": "create-whop-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The best way to create a whop app",
   "keywords": [
     "whop",
@@ -17,15 +17,19 @@
   "license": "MIT",
   "author": "Constantine & Whop Labs",
   "type": "module",
-  "main": "index.js",
+  "bin": {
+    "create-whop-app": "index.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "bun-types": "^1.2.23",
-    "csstype": "^3.1.3",
-    "typescript": "^5.9.3",
-    "undici-types": "^7.13.0"
+    "kleur": "^4.1.5",
+    "prompts": "^2.4.2",
+    "typescript": "^5.9.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/prompts": "^2.4.9"
+  }
 }
