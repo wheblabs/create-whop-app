@@ -1,6 +1,6 @@
 {
   "name": "create-whop-app",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The best way to create a whop app",
   "keywords": [
     "whop",
@@ -18,18 +18,24 @@
   "author": "Constantine & Whop Labs",
   "type": "module",
   "bin": {
-    "create-whop-app": "index.ts"
+    "create-whop-app": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "bun build ./src/index.ts --target node --outfile ./dist/index.js"
   },
   "dependencies": {
-    "bun-types": "^1.2.23",
     "kleur": "^4.1.5",
-    "prompts": "^2.4.2",
-    "typescript": "^5.9.3"
+    "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@types/prompts": "^2.4.9"
+    "@types/prompts": "^2.4.9",
+    "bun-types": "^1.2.23",
+    "typescript": "^5.9.3"
   }
 }
