@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 
-import { join, resolve, dirname } from 'path'
-import { lstatSync, mkdirSync } from 'node:fs'
-import kleur from 'kleur'
-import prompts from 'prompts'
 import { $ } from 'bun'
+import kleur from 'kleur'
+import { lstatSync, mkdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'path'
+import prompts from 'prompts'
+import readline from 'node:readline'
 
 const __dirname = dirname(import.meta.url.replace('file://', ''))
 
@@ -18,17 +19,26 @@ async function copyTemplate(templateDir: string, dest: string): Promise<void> {
 async function main() {
   console.log(kleur.cyan('⟐ create-whop-app'))
 
-  if (process.argv.length > 2) {
-    console.error(kleur.red('This CLI accepts no arguments.'))
+  if (process.argv.length > 3) {
+    console.error(kleur.red('Usage: create-whop-app [project-name]'))
     process.exit(1)
   }
 
-  const { name } = await prompts({
-    type: 'text',
-    name: 'name',
-    message: 'Project name:',
-    initial: 'my-whop-app',
-  })
+  let name: string
+
+  if (process.argv.length === 3) {
+    // Project name provided as argument
+    name = process.argv[2]!
+  } else {
+    // Prompt for project name
+    const response = await prompts({
+      type: 'text',
+      name: 'name',
+      message: 'Project name:',
+      initial: 'my-whop-app',
+    })
+    name = response.name
+  }
 
   if (!name?.trim()) {
     console.error(kleur.red('Invalid project name.'))
@@ -43,30 +53,45 @@ async function main() {
 
   mkdirSync(dest, { recursive: true })
 
-  const templateDir = join(__dirname, '..', 'templates', 'next-whop')
+  const templateDir = join(__dirname, '..', 'templates', 'whop-next')
 
   console.log(kleur.cyan(`Initializing... ${name}`))
 
   await copyTemplate(templateDir, dest)
   await $`bun install --cwd ${dest}`
-  await $`bun typegen --cwd ${dest}`
+  await $`cd ${dest} && bun typegen`
 
   console.log('')
   console.log(kleur.cyan('Environment Setup'))
   console.log(
     kleur.white(
-      'Go to https://whop.com/dashboard/developer and copy all env variables',
+      '1. Go to https://whop.com/dashboard\n2. Open "Developer" tab on the left sidebar at the bottom\n3. Choose your app\n4. Click "Copy" icon next to "Environment Variables"\n5. Paste them below (press Enter on empty line when done)',
     ),
   )
   console.log('')
 
-  const { envVars } = await prompts({
-    type: 'text',
-    name: 'envVars',
-    message: 'Paste your environment variables:',
+  // Read multiline input from stdin using readline
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   })
 
-  if (!envVars?.trim()) {
+  const lines: string[] = []
+
+  process.stdout.write(kleur.dim('Paste environment variables:\n'))
+
+  const envVars = await new Promise<string>((resolve) => {
+    rl.on('line', (line) => {
+      if (line.trim() === '' && lines.length > 0) {
+        rl.close()
+        resolve(lines.join('\n'))
+      } else if (line.trim() !== '') {
+        lines.push(line.trim())
+      }
+    })
+  })
+
+  if (!envVars.trim()) {
     console.error(kleur.red('No environment variables provided.'))
     process.exit(1)
   }
@@ -79,8 +104,15 @@ async function main() {
     'NEXT_PUBLIC_WHOP_COMPANY_ID',
   ]
 
-  const envLines = envVars
+  // Handle both newline-separated and concatenated format from Whop
+  // Split on known variable name patterns that start new entries
+  const normalized = envVars
     .trim()
+    .replace(/(NEXT_PUBLIC_WHOP_APP_ID=)/g, '\n$1')
+    .replace(/(NEXT_PUBLIC_WHOP_AGENT_USER_ID=)/g, '\n$1')
+    .replace(/(NEXT_PUBLIC_WHOP_COMPANY_ID=)/g, '\n$1')
+
+  const envLines = normalized
     .split('\n')
     .map((line: string) => line.trim())
     .filter((line: string) => line && !line.startsWith('#'))
@@ -114,7 +146,18 @@ async function main() {
 
   console.log(kleur.green('✓ Environment variables configured'))
   console.log(kleur.green('✓ Project ready'))
-  console.log(kleur.white(`cd ${name}`))
+  console.log('')
+  console.log(kleur.cyan('Starting development server...'))
+  console.log('')
+
+  // Change to project directory and start bun dev
+  process.chdir(dest)
+  const dev = Bun.spawn(['bun', 'dev'], {
+    cwd: dest,
+    stdio: ['inherit', 'inherit', 'inherit'],
+  })
+
+  await dev.exited
 }
 
 main().catch((err) => {
