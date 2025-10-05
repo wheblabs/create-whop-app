@@ -1,15 +1,15 @@
 # create-whop-app
 
-To install dependencies:
+Create Whop apps instantly.
+
+## Usage
+
+You need [Bun](https://bun.sh) installed.
 
 ```bash
-bun install
+bunx create-whop-app@latest
 ```
 
-To run:
+---
 
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.22. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Made by [Whop Labs](https://whop.com/whoplabs-main/) · Follow us on [𝕏](https://x.com/wheblabs)
