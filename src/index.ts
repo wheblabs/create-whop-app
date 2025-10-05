@@ -17,6 +17,13 @@ async function copyTemplate(templateDir: string, dest: string): Promise<void> {
 }
 
 async function main() {
+  // Check if running with Bun
+  if (typeof Bun === 'undefined') {
+    console.error(kleur.red('Use bunx loser'))
+    console.log(kleur.white('Install Bun: npm install -g bun'))
+    process.exit(1)
+  }
+
   console.log(kleur.cyan('⟐ create-whop-app'))
 
   if (process.argv.length > 3) {
