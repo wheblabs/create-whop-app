@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "whop-proxy --command 'next dev --turbopack'",
     "build": "next build --turbopack",
-    "start": "whop-proxy --command 'next start'",
+    "start": "next start",
     "lint": "eslint",
     "typegen": "next typegen"
   },
