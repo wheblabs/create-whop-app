@@ -12,8 +12,18 @@ const __dirname = dirname(import.meta.url.replace('file://', ''))
 async function copyTemplate(templateDir: string, dest: string): Promise<void> {
   // Use shell cp -r to copy
   await $`cp -r ${templateDir}/* ${dest}`.quiet()
-  // also hidden files (suppress error if none exist)
-  await $`cp -r ${templateDir}/.* ${dest} 2>/dev/null || true`.quiet()
+
+  // Copy specific dotfiles explicitly
+  const dotfiles = ['.gitignore', '.prettierrc', '.env.example']
+  for (const dotfile of dotfiles) {
+    const srcPath = join(templateDir, dotfile)
+    const destPath = join(dest, dotfile)
+    try {
+      await $`cp ${srcPath} ${destPath}`.quiet()
+    } catch {
+      // File doesn't exist in template, skip it
+    }
+  }
 }
 
 async function main() {
