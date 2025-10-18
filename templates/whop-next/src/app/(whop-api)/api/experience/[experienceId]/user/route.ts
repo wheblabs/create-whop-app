@@ -1,7 +1,6 @@
-import { verifyUserToken } from '@whop/api'
 import { NextRequest, NextResponse } from 'next/server'
-import { WhopExperienceAccess, WhopUser } from '~/components/whop-context'
 import { whop } from '~/lib/whop'
+import Shared from '@whop/sdk'
 
 export async function GET(
   req: NextRequest,
@@ -10,15 +9,18 @@ export async function GET(
   const { experienceId } = await params
   if (!experienceId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
 
-  const { userId } = await verifyUserToken(req.headers)
+  const { userId } = await whop.verifyUserToken(req.headers)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const [user, access] = await Promise.all([
-      whop.users.getUser({ userId }),
-      whop.access.checkIfUserHasAccessToExperience({ userId, experienceId }),
+      whop.users.retrieve(userId),
+      whop.users.checkAccess(experienceId, { id: userId }),
     ])
-    return NextResponse.json<{ user: WhopUser; access: WhopExperienceAccess }>({ user, access })
+    return NextResponse.json<{
+      user: Shared.UserRetrieveResponse
+      access: Shared.UserCheckAccessResponse
+    }>({ user, access })
   } catch (error) {
     console.error('Failed to fetch user:', error)
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })

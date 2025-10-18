@@ -65,7 +65,7 @@ Before your app can be installed and used, you need to configure it in the Whop 
 
 This template comes with:
 
-- **Whop SDK** (`@whop/api`) - Pre-configured client for Whop API
+- **Whop SDK** (`@whop/sdk`) - Pre-configured client for Whop API
 - **Whop Context** - React hooks for accessing Whop data in your components
 - **Experience-based routing** - Pages that map to Whop experiences (installations)
 - **API routes** - Server-side endpoints for Whop integration

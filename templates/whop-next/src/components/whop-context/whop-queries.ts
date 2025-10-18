@@ -1,6 +1,6 @@
 import { defaultShouldDehydrateQuery, QueryClient } from '@tanstack/react-query'
 import { env } from '~/env'
-import type { WhopExperience, WhopExperienceAccess, WhopUser } from './whop-context'
+import Shared from '@whop/sdk'
 
 export const serverQueryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +27,7 @@ export const whopExperienceQuery = (experienceId: string) => ({
   queryFn: async () => {
     const response = await fetch(getApiUrl(`/api/experience/${experienceId}`))
     if (!response.ok) throw new Error('Failed to fetch whop experience')
-    const result = (await response.json()) as WhopExperience
+    const result = (await response.json()) as Shared.Experience
     return result
   },
 })
@@ -37,6 +37,9 @@ export const whopUserQuery = (experienceId: string) => ({
   queryFn: async () => {
     const response = await fetch(getApiUrl(`/api/experience/${experienceId}/user`))
     if (!response.ok) throw new Error('Failed to fetch whop user')
-    return response.json() as Promise<{ user: WhopUser; access: WhopExperienceAccess }>
+    return response.json() as Promise<{
+      user: Shared.UserRetrieveResponse
+      access: Shared.UserCheckAccessResponse
+    }>
   },
 })

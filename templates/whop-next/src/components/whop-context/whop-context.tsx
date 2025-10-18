@@ -1,15 +1,7 @@
 'use client'
 
-import type {
-  CheckIfUserHasAccessToExperienceQuery,
-  GetExperienceQuery,
-  GetUserQuery,
-} from '@whop/api'
+import Shared from '@whop/sdk'
 import { createContext, useContext } from 'react'
-
-export type WhopExperienceAccess = CheckIfUserHasAccessToExperienceQuery['hasAccessToExperience']
-export type WhopExperience = GetExperienceQuery['experience']
-export type WhopUser = GetUserQuery['publicUser']
 
 /**
  * The context for the Whop API
@@ -18,9 +10,9 @@ export type WhopUser = GetUserQuery['publicUser']
  * @property access - Whether the user has access to the experience
  */
 interface WhopContext {
-  experience: WhopExperience
-  user: WhopUser
-  access: WhopExperienceAccess
+  experience: Shared.Experience
+  user: Shared.UserRetrieveResponse
+  access: Shared.UserCheckAccessResponse
 }
 
 export const WhopContext = createContext<WhopContext | null>(null)
