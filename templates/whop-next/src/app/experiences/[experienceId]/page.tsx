@@ -58,7 +58,7 @@ export default function Page() {
             User: {user.name} (@{user.username})
           </span>
           <span className="px-2 py-1 rounded-full bg-white/[.08] border border-white/[.145]">
-            Access: {access.accessLevel}
+            Access: {access.access_level}
           </span>
         </div>
       </main>

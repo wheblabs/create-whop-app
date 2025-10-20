@@ -7,7 +7,7 @@ import {
   QueryClientProvider,
   useSuspenseQuery,
 } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { WhopContext } from './whop-context'
 import { whopExperienceQuery, whopUserQuery } from './whop-queries'
 
@@ -18,7 +18,17 @@ interface WhopProviderProps {
 }
 
 export function WhopProvider({ children, experienceId, state }: WhopProviderProps) {
-  const client = new QueryClient()
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute
+            retry: 1,
+          },
+        },
+      }),
+  )
 
   return (
     <QueryClientProvider client={client}>

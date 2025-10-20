@@ -1,0 +1,21 @@
+{
+  "name": "sqlite",
+  "description": "SQLite database with Drizzle ORM (upgradable to Turso)",
+  "files": [
+    "src/db/**",
+    "drizzle.config.ts"
+  ],
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "drizzle-orm": "^0.36.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.1"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  }
+}
