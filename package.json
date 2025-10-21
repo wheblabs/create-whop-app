@@ -1,6 +1,6 @@
 {
   "name": "create-whop-app",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "The best way to create a whop app",
   "keywords": [
     "whop",
@@ -29,6 +29,7 @@
   ],
   "scripts": {
     "build": "bun build ./src/index.ts --target node --outfile ./dist/index.js && chmod +x ./dist/index.js",
+    "prepublishOnly": "bun run build",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
