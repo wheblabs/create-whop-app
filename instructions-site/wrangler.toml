@@ -1,0 +1,17 @@
+name = "create-whop-app-instructions"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "create-whop-app-instructions"
+
+# Custom domain route
+routes = [
+  { pattern = "create-whop-app-instructions.whoplabs.io/*", custom_domain = true }
+]
+

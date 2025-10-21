@@ -1,0 +1,15 @@
+{
+  "name": "create-whop-app-instructions",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "wrangler": "^3.94.0",
+    "typescript": "^5.7.2"
+  },
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "upload": "wrangler r2 object put create-whop-app-instructions/index.html --file=./index.html"
+  }
+}

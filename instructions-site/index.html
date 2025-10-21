@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Whop App Instructions</title>
+
+  <script>
+    !function (t, e) { var o, n, p, r; e.__SV || (window.posthog && window.posthog.__loaded) || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.crossOrigin = "anonymous", p.async = !0, p.src = s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "init hi $r kr ui wr Er capture Ri calculateEventProperties Ir register register_once register_for_session unregister unregister_for_session Fr getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Cr Tr createPersonProfile Or yr Mr opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Pr debug L Rr getPageViewId captureTraceFeedback captureTraceMetric gr".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
+    posthog.init('phc_IMyPvFvpe2BCRQtAppHq66EGMRYIh2XAyZtD4FLlZe3', {
+      api_host: 'https://us.i.posthog.com',
+      defaults: '2025-05-24',
+      person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #141212;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .circle {
+      position: absolute;
+      top: 14.6px;
+      right: 14.6px;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: transparent;
+      border: 4px solid #FA4616;
+      pointer-events: all;
+      cursor: pointer;
+    }
+
+    .arrow-container {
+      position: absolute;
+      top: 65px;
+      right: 24px;
+      pointer-events: none;
+      animation: bounce 1.5s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 13px solid #FA4616;
+    }
+
+    .arrow-tail {
+      width: 1px;
+      height: 50px;
+      background: #FA4616;
+    }
+
+    .arrow-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #FA4616;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: -2px;
+    }
+
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .center-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 70%;
+      width: 95%;
+    }
+
+    .center-image {
+      max-width: 100%;
+      width: 100%;
+      height: auto;
+      min-height: 500px;
+      object-fit: contain;
+      pointer-events: all;
+      border-radius: 0;
+      display: block;
+    }
+
+    .image-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .instruction-text {
+      color: #FCF6F5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      text-align: center;
+      line-height: 1.5;
+      max-width: 800px;
+    }
+
+    .highlight {
+      color: #FA4616;
+      font-weight: 600;
+    }
+
+    .image-number {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #FA4616;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="center-content">
+    <div style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+      <div class="image-container">
+        <div class="image-number">1</div>
+        <img src="https://create-whop-app-cdn.whoplabs.io/instruction-1.webp" alt="Instruction 1" class="center-image">
+      </div>
+      <div class="image-container">
+        <div class="image-number">2</div>
+        <img src="https://create-whop-app-cdn.whoplabs.io/instruction-2.webp" alt="Instruction 2" class="center-image">
+      </div>
+      <div class="image-container">
+        <div class="image-number">3</div>
+        <img src="https://create-whop-app-cdn.whoplabs.io/instruction-3.webp" alt="Instruction 3" class="center-image">
+      </div>
+    </div>
+    <p class="instruction-text">
+      Click on the <span class="highlight">button</span> on the <span class="highlight">top right</span> and set the
+      "Environment" to <span class="highlight">"Localhost"</span> to start developing the app.
+    </p>
+  </div>
+
+  <div class="overlay">
+    <div class="circle"></div>
+    <div class="arrow-container">
+      <div class="arrow-head"></div>
+      <div class="arrow-tail"></div>
+    </div>
+  </div>
+</body>
+
+</html>
