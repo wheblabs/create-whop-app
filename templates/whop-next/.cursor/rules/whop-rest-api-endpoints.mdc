@@ -1,0 +1,576 @@
+---
+alwaysApply: true
+---
+
+# Whop REST API - Complete Endpoint Reference
+
+Source: https://docs.whop.com/api-reference/apps/list-apps
+
+## Introduction
+
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions**: https://docs.whop.com/apps/api/permissions
+
+## Payments
+
+### Products
+- **GET** List products - https://docs.whop.com/api-reference/products/list-products
+- **POST** Create product - https://docs.whop.com/api-reference/products/create-product
+- **GET** Retrieve product - https://docs.whop.com/api-reference/products/retrieve-product
+- **PATCH** Update product - https://docs.whop.com/api-reference/products/update-product
+- **DELETE** Delete product - https://docs.whop.com/api-reference/products/delete-product
+
+### Plans
+- **GET** List plans - https://docs.whop.com/api-reference/plans/list-plans
+- **POST** Create plan - https://docs.whop.com/api-reference/plans/create-plan
+- **GET** Retrieve plan - https://docs.whop.com/api-reference/plans/retrieve-plan
+- **PATCH** Update plan - https://docs.whop.com/api-reference/plans/update-plan
+- **DELETE** Delete plan - https://docs.whop.com/api-reference/plans/delete-plan
+
+### Payments
+- **GET** List payments - https://docs.whop.com/api-reference/payments/list-payments
+- **GET** Retrieve payment - https://docs.whop.com/api-reference/payments/retrieve-payment
+- **POST** Refund payment - https://docs.whop.com/api-reference/payments/refund-payment
+- **POST** Retry payment - https://docs.whop.com/api-reference/payments/retry-payment
+- **POST** Void payment - https://docs.whop.com/api-reference/payments/void-payment
+
+### Invoices
+- **GET** List invoices - https://docs.whop.com/api-reference/invoices/list-invoices
+- **POST** Create invoice - https://docs.whop.com/api-reference/invoices/create-invoice
+- **GET** Retrieve invoice - https://docs.whop.com/api-reference/invoices/retrieve-invoice
+- **POST** Void invoice - https://docs.whop.com/api-reference/invoices/void-invoice
+- **WEBHOOK** Invoice created - https://docs.whop.com/api-reference/invoices/invoice-created
+- **WEBHOOK** Invoice paid - https://docs.whop.com/api-reference/invoices/invoice-paid
+- **WEBHOOK** Invoice past due - https://docs.whop.com/api-reference/invoices/invoice-past-due
+- **WEBHOOK** Invoice voided - https://docs.whop.com/api-reference/invoices/invoice-voided
+
+### Transfers
+- **GET** List transfers - https://docs.whop.com/api-reference/transfers/list-transfers
+- **POST** Create transfer - https://docs.whop.com/api-reference/transfers/create-transfer
+- **GET** Retrieve transfer - https://docs.whop.com/api-reference/transfers/retrieve-transfer
+
+### Ledger Accounts
+- **GET** Retrieve ledger account - https://docs.whop.com/api-reference/ledger-accounts/retrieve-ledger-account
+
+### Checkout Configurations
+- **GET** List checkout configurations - https://docs.whop.com/api-reference/checkout-configurations/list-checkout-configurations
+- **POST** Create checkout configuration - https://docs.whop.com/api-reference/checkout-configurations/create-checkout-configuration
+- **GET** Retrieve checkout configuration - https://docs.whop.com/api-reference/checkout-configurations/retrieve-checkout-configuration
+
+## Admin
+
+### Companies
+- **GET** Retrieve company - https://docs.whop.com/api-reference/companies/retrieve-company
+
+### Members
+- **GET** List members - https://docs.whop.com/api-reference/members/list-members
+- **GET** Retrieve member - https://docs.whop.com/api-reference/members/retrieve-member
+
+### Memberships
+- **GET** List memberships - https://docs.whop.com/api-reference/memberships/list-memberships
+- **GET** Retrieve membership - https://docs.whop.com/api-reference/memberships/retrieve-membership
+- **PATCH** Update membership - https://docs.whop.com/api-reference/memberships/update-membership
+- **POST** Cancel membership - https://docs.whop.com/api-reference/memberships/cancel-membership
+- **POST** Pause membership - https://docs.whop.com/api-reference/memberships/pause-membership
+- **POST** Resume membership - https://docs.whop.com/api-reference/memberships/resume-membership
+
+### Entries
+- **GET** List entries - https://docs.whop.com/api-reference/entries/list-entries
+- **GET** Retrieve entry - https://docs.whop.com/api-reference/entries/retrieve-entry
+- **POST** Approve entry - https://docs.whop.com/api-reference/entries/approve-entry
+- **POST** Deny entry - https://docs.whop.com/api-reference/entries/deny-entry
+
+### Shipments
+- **GET** List shipments - https://docs.whop.com/api-reference/shipments/list-shipments
+- **POST** Create shipment - https://docs.whop.com/api-reference/shipments/create-shipment
+- **GET** Retrieve shipment - https://docs.whop.com/api-reference/shipments/retrieve-shipment
+
+### Authorized Users
+- **GET** List authorized users - https://docs.whop.com/api-reference/authorized-users/list-authorized-users
+- **GET** Retrieve authorized user - https://docs.whop.com/api-reference/authorized-users/retrieve-authorized-user
+
+## Content
+
+### Users
+- **GET** Retrieve user - https://docs.whop.com/api-reference/users/retrieve-user
+- **GET** Check access - https://docs.whop.com/api-reference/users/check-access
+
+### Experiences
+- **GET** List experiences - https://docs.whop.com/api-reference/experiences/list-experiences
+- **POST** Create experience - https://docs.whop.com/api-reference/experiences/create-experience
+- **GET** Retrieve experience - https://docs.whop.com/api-reference/experiences/retrieve-experience
+- **PATCH** Update experience - https://docs.whop.com/api-reference/experiences/update-experience
+- **DELETE** Delete experience - https://docs.whop.com/api-reference/experiences/delete-experience
+- **POST** Attach experience - https://docs.whop.com/api-reference/experiences/attach-experience
+- **POST** Detach experience - https://docs.whop.com/api-reference/experiences/detach-experience
+
+### Forum Posts
+- **GET** List forum posts - https://docs.whop.com/api-reference/forum-posts/list-forum-posts
+- **POST** Create forum post - https://docs.whop.com/api-reference/forum-posts/create-forum-post
+- **GET** Retrieve forum post - https://docs.whop.com/api-reference/forum-posts/retrieve-forum-post
+
+### Forums
+- **GET** List forums - https://docs.whop.com/api-reference/forums/list-forums
+- **GET** Retrieve forum - https://docs.whop.com/api-reference/forums/retrieve-forum
+- **PATCH** Update forum - https://docs.whop.com/api-reference/forums/update-forum
+
+### Messages
+- **GET** List messages - https://docs.whop.com/api-reference/messages/list-messages
+- **POST** Create message - https://docs.whop.com/api-reference/messages/create-message
+- **GET** Retrieve message - https://docs.whop.com/api-reference/messages/retrieve-message
+
+### Chat Channels
+- **GET** List chat channels - https://docs.whop.com/api-reference/chat-channels/list-chat-channels
+- **GET** Retrieve chat channel - https://docs.whop.com/api-reference/chat-channels/retrieve-chat-channel
+- **PATCH** Update chat channel - https://docs.whop.com/api-reference/chat-channels/update-chat-channel
+
+### Support Channels
+- **GET** List support channels - https://docs.whop.com/api-reference/support-channels/list-support-channels
+- **POST** Create support channel - https://docs.whop.com/api-reference/support-channels/create-support-channel
+- **GET** Retrieve support channel - https://docs.whop.com/api-reference/support-channels/retrieve-support-channel
+
+### Reactions
+- **GET** List reactions - https://docs.whop.com/api-reference/reactions/list-reactions
+- **POST** Create reaction - https://docs.whop.com/api-reference/reactions/create-reaction
+- **GET** Retrieve reaction - https://docs.whop.com/api-reference/reactions/retrieve-reaction
+
+### Course Lesson Interactions
+- **GET** List course lesson interactions - https://docs.whop.com/api-reference/course-lesson-interactions/list-course-lesson-interactions
+- **GET** Retrieve course lesson interaction - https://docs.whop.com/api-reference/course-lesson-interactions/retrieve-course-lesson-interaction
+
+## Developer
+
+### Apps
+- **GET** List apps - https://docs.whop.com/api-reference/apps/list-apps
+- **POST** Create app - https://docs.whop.com/api-reference/apps/create-app
+- **GET** Retrieve app - https://docs.whop.com/api-reference/apps/retrieve-app
+- **PATCH** Update app - https://docs.whop.com/api-reference/apps/update-app
+
+### App Builds
+- **GET** List app builds - https://docs.whop.com/api-reference/app-builds/list-app-builds
+- **POST** Create app build - https://docs.whop.com/api-reference/app-builds/create-app-build
+- **GET** Retrieve app build - https://docs.whop.com/api-reference/app-builds/retrieve-app-build
+- **POST** Promote app build - https://docs.whop.com/api-reference/app-builds/promote-app-build
+
+## Summary by Category
+
+### Payments (7 sections, 28 endpoints)
+- Products: 5 endpoints (CRUD + List)
+- Plans: 5 endpoints (CRUD + List)
+- Payments: 5 endpoints (List, Retrieve, Refund, Retry, Void)
+- Invoices: 8 endpoints (4 API + 4 Webhooks)
+- Transfers: 3 endpoints (List, Create, Retrieve)
+- Ledger accounts: 1 endpoint (Retrieve)
+- Checkout configurations: 3 endpoints (List, Create, Retrieve)
+
+### Admin (6 sections, 20 endpoints)
+- Companies: 1 endpoint (Retrieve)
+- Members: 2 endpoints (List, Retrieve)
+- Memberships: 6 endpoints (List, Retrieve, Update, Cancel, Pause, Resume)
+- Entries: 4 endpoints (List, Retrieve, Approve, Deny)
+- Shipments: 3 endpoints (List, Create, Retrieve)
+- Authorized users: 2 endpoints (List, Retrieve)
+
+### Content (9 sections, 22 endpoints)
+- Users: 2 endpoints (Retrieve, Check access)
+- Experiences: 7 endpoints (CRUD + List + Attach/Detach)
+- Forum posts: 3 endpoints (List, Create, Retrieve)
+- Forums: 3 endpoints (List, Retrieve, Update)
+- Messages: 3 endpoints (List, Create, Retrieve)
+- Chat channels: 3 endpoints (List, Retrieve, Update)
+- Support channels: 3 endpoints (List, Create, Retrieve)
+- Reactions: 3 endpoints (List, Create, Retrieve)
+- Course lesson interactions: 2 endpoints (List, Retrieve)
+
+### Developer (2 sections, 8 endpoints)
+- Apps: 4 endpoints (CRUD + List)
+- App builds: 4 endpoints (List, Create, Retrieve, Promote)
+
+## Total: 78 REST API Endpoints
+
+## SDK Installation
+
+```bash
+npm install @whop/sdk
+```
+
+## Basic Usage
+
+```javascript
+import Whop from '@whop/sdk';
+
+const client = new Whop({
+  appID: 'app_xxxxxxxxxxxxxx',
+  apiKey: 'your-api-key',
+});
+
+// Example: List products
+const products = await client.products.list();
+
+// Example: Create a plan
+const plan = await client.plans.create({
+  product_id: 'prod_xxxxx',
+  price: 29.99,
+  interval: 'month'
+});
+```
+
+## Authentication
+
+All endpoints require an API key in the header:
+```
+Authorization: Bearer your-api-key-here
+```
+
+Get your API key from: `/dashboard/developer`
+
+## Pagination
+
+Most list endpoints support cursor-based pagination:
+- `after` - Returns elements after this cursor
+- `before` - Returns elements before this cursor
+- `first` - Number of elements to return (forward pagination)
+- `last` - Number of elements to return (backward pagination)
+
+Response includes `page_info`:
+```json
+{
+  "page_info": {
+    "end_cursor": "cursor_string",
+    "start_cursor": "cursor_string",
+    "has_next_page": true,
+    "has_previous_page": false
+  }
+}
+```
+
+## Common Patterns
+
+### CRUD Operations
+Most resources follow RESTful patterns:
+- **GET** `/resource` - List resources
+- **POST** `/resource` - Create resource
+- **GET** `/resource/{id}` - Retrieve specific resource
+- **PATCH** `/resource/{id}` - Update resource
+- **DELETE** `/resource/{id}` - Delete resource
+
+### Webhooks
+Invoice events provide webhook endpoints for real-time notifications:
+- Invoice created
+- Invoice paid
+- Invoice past due
+- Invoice voided
+
+## Key Resources
+
+### Products & Plans
+Products (Access Passes) define what you're selling.
+Plans define how customers pay (pricing, intervals, checkout links).
+
+### Memberships vs Members
+- **Member**: A user in a company (can have multiple memberships)
+- **Membership**: Active subscription to a specific product/plan
+
+### Experiences
+App instances on a company. When an app is installed, it creates an experience.
+Multiple experiences = multiple installations of the same app.
+
+### Authorized Users
+Team members/admins of a company with elevated permissions.
+
+### Entries
+Waitlist entries for products with waitlist release method.
+
+## Notes
+
+- All IDs use Whop's tag format (e.g., `app_xxxxx`, `biz_xxxxx`, `user_xxxxx`)
+- Timestamps are in ISO 8601 format
+- Currency codes follow ISO 4217 (USD, EUR, GBP, etc.)
+- The SDK handles pagination automatically with async iterators
+
+# Whop REST API - Complete Endpoint Reference
+
+Source: https://docs.whop.com/api-reference/apps/list-apps
+
+## Introduction
+
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions**: https://docs.whop.com/apps/api/permissions
+
+## Payments
+
+### Products
+- **GET** List products - https://docs.whop.com/api-reference/products/list-products
+- **POST** Create product - https://docs.whop.com/api-reference/products/create-product
+- **GET** Retrieve product - https://docs.whop.com/api-reference/products/retrieve-product
+- **PATCH** Update product - https://docs.whop.com/api-reference/products/update-product
+- **DELETE** Delete product - https://docs.whop.com/api-reference/products/delete-product
+
+### Plans
+- **GET** List plans - https://docs.whop.com/api-reference/plans/list-plans
+- **POST** Create plan - https://docs.whop.com/api-reference/plans/create-plan
+- **GET** Retrieve plan - https://docs.whop.com/api-reference/plans/retrieve-plan
+- **PATCH** Update plan - https://docs.whop.com/api-reference/plans/update-plan
+- **DELETE** Delete plan - https://docs.whop.com/api-reference/plans/delete-plan
+
+### Payments
+- **GET** List payments - https://docs.whop.com/api-reference/payments/list-payments
+- **GET** Retrieve payment - https://docs.whop.com/api-reference/payments/retrieve-payment
+- **POST** Refund payment - https://docs.whop.com/api-reference/payments/refund-payment
+- **POST** Retry payment - https://docs.whop.com/api-reference/payments/retry-payment
+- **POST** Void payment - https://docs.whop.com/api-reference/payments/void-payment
+
+### Invoices
+- **GET** List invoices - https://docs.whop.com/api-reference/invoices/list-invoices
+- **POST** Create invoice - https://docs.whop.com/api-reference/invoices/create-invoice
+- **GET** Retrieve invoice - https://docs.whop.com/api-reference/invoices/retrieve-invoice
+- **POST** Void invoice - https://docs.whop.com/api-reference/invoices/void-invoice
+- **WEBHOOK** Invoice created - https://docs.whop.com/api-reference/invoices/invoice-created
+- **WEBHOOK** Invoice paid - https://docs.whop.com/api-reference/invoices/invoice-paid
+- **WEBHOOK** Invoice past due - https://docs.whop.com/api-reference/invoices/invoice-past-due
+- **WEBHOOK** Invoice voided - https://docs.whop.com/api-reference/invoices/invoice-voided
+
+### Transfers
+- **GET** List transfers - https://docs.whop.com/api-reference/transfers/list-transfers
+- **POST** Create transfer - https://docs.whop.com/api-reference/transfers/create-transfer
+- **GET** Retrieve transfer - https://docs.whop.com/api-reference/transfers/retrieve-transfer
+
+### Ledger Accounts
+- **GET** Retrieve ledger account - https://docs.whop.com/api-reference/ledger-accounts/retrieve-ledger-account
+
+### Checkout Configurations
+- **GET** List checkout configurations - https://docs.whop.com/api-reference/checkout-configurations/list-checkout-configurations
+- **POST** Create checkout configuration - https://docs.whop.com/api-reference/checkout-configurations/create-checkout-configuration
+- **GET** Retrieve checkout configuration - https://docs.whop.com/api-reference/checkout-configurations/retrieve-checkout-configuration
+
+## Admin
+
+### Companies
+- **GET** Retrieve company - https://docs.whop.com/api-reference/companies/retrieve-company
+
+### Members
+- **GET** List members - https://docs.whop.com/api-reference/members/list-members
+- **GET** Retrieve member - https://docs.whop.com/api-reference/members/retrieve-member
+
+### Memberships
+- **GET** List memberships - https://docs.whop.com/api-reference/memberships/list-memberships
+- **GET** Retrieve membership - https://docs.whop.com/api-reference/memberships/retrieve-membership
+- **PATCH** Update membership - https://docs.whop.com/api-reference/memberships/update-membership
+- **POST** Cancel membership - https://docs.whop.com/api-reference/memberships/cancel-membership
+- **POST** Pause membership - https://docs.whop.com/api-reference/memberships/pause-membership
+- **POST** Resume membership - https://docs.whop.com/api-reference/memberships/resume-membership
+
+### Entries
+- **GET** List entries - https://docs.whop.com/api-reference/entries/list-entries
+- **GET** Retrieve entry - https://docs.whop.com/api-reference/entries/retrieve-entry
+- **POST** Approve entry - https://docs.whop.com/api-reference/entries/approve-entry
+- **POST** Deny entry - https://docs.whop.com/api-reference/entries/deny-entry
+
+### Shipments
+- **GET** List shipments - https://docs.whop.com/api-reference/shipments/list-shipments
+- **POST** Create shipment - https://docs.whop.com/api-reference/shipments/create-shipment
+- **GET** Retrieve shipment - https://docs.whop.com/api-reference/shipments/retrieve-shipment
+
+### Authorized Users
+- **GET** List authorized users - https://docs.whop.com/api-reference/authorized-users/list-authorized-users
+- **GET** Retrieve authorized user - https://docs.whop.com/api-reference/authorized-users/retrieve-authorized-user
+
+## Content
+
+### Users
+- **GET** Retrieve user - https://docs.whop.com/api-reference/users/retrieve-user
+- **GET** Check access - https://docs.whop.com/api-reference/users/check-access
+
+### Experiences
+- **GET** List experiences - https://docs.whop.com/api-reference/experiences/list-experiences
+- **POST** Create experience - https://docs.whop.com/api-reference/experiences/create-experience
+- **GET** Retrieve experience - https://docs.whop.com/api-reference/experiences/retrieve-experience
+- **PATCH** Update experience - https://docs.whop.com/api-reference/experiences/update-experience
+- **DELETE** Delete experience - https://docs.whop.com/api-reference/experiences/delete-experience
+- **POST** Attach experience - https://docs.whop.com/api-reference/experiences/attach-experience
+- **POST** Detach experience - https://docs.whop.com/api-reference/experiences/detach-experience
+
+### Forum Posts
+- **GET** List forum posts - https://docs.whop.com/api-reference/forum-posts/list-forum-posts
+- **POST** Create forum post - https://docs.whop.com/api-reference/forum-posts/create-forum-post
+- **GET** Retrieve forum post - https://docs.whop.com/api-reference/forum-posts/retrieve-forum-post
+
+### Forums
+- **GET** List forums - https://docs.whop.com/api-reference/forums/list-forums
+- **GET** Retrieve forum - https://docs.whop.com/api-reference/forums/retrieve-forum
+- **PATCH** Update forum - https://docs.whop.com/api-reference/forums/update-forum
+
+### Messages
+- **GET** List messages - https://docs.whop.com/api-reference/messages/list-messages
+- **POST** Create message - https://docs.whop.com/api-reference/messages/create-message
+- **GET** Retrieve message - https://docs.whop.com/api-reference/messages/retrieve-message
+
+### Chat Channels
+- **GET** List chat channels - https://docs.whop.com/api-reference/chat-channels/list-chat-channels
+- **GET** Retrieve chat channel - https://docs.whop.com/api-reference/chat-channels/retrieve-chat-channel
+- **PATCH** Update chat channel - https://docs.whop.com/api-reference/chat-channels/update-chat-channel
+
+### Support Channels
+- **GET** List support channels - https://docs.whop.com/api-reference/support-channels/list-support-channels
+- **POST** Create support channel - https://docs.whop.com/api-reference/support-channels/create-support-channel
+- **GET** Retrieve support channel - https://docs.whop.com/api-reference/support-channels/retrieve-support-channel
+
+### Reactions
+- **GET** List reactions - https://docs.whop.com/api-reference/reactions/list-reactions
+- **POST** Create reaction - https://docs.whop.com/api-reference/reactions/create-reaction
+- **GET** Retrieve reaction - https://docs.whop.com/api-reference/reactions/retrieve-reaction
+
+### Course Lesson Interactions
+- **GET** List course lesson interactions - https://docs.whop.com/api-reference/course-lesson-interactions/list-course-lesson-interactions
+- **GET** Retrieve course lesson interaction - https://docs.whop.com/api-reference/course-lesson-interactions/retrieve-course-lesson-interaction
+
+## Developer
+
+### Apps
+- **GET** List apps - https://docs.whop.com/api-reference/apps/list-apps
+- **POST** Create app - https://docs.whop.com/api-reference/apps/create-app
+- **GET** Retrieve app - https://docs.whop.com/api-reference/apps/retrieve-app
+- **PATCH** Update app - https://docs.whop.com/api-reference/apps/update-app
+
+### App Builds
+- **GET** List app builds - https://docs.whop.com/api-reference/app-builds/list-app-builds
+- **POST** Create app build - https://docs.whop.com/api-reference/app-builds/create-app-build
+- **GET** Retrieve app build - https://docs.whop.com/api-reference/app-builds/retrieve-app-build
+- **POST** Promote app build - https://docs.whop.com/api-reference/app-builds/promote-app-build
+
+## Summary by Category
+
+### Payments (7 sections, 28 endpoints)
+- Products: 5 endpoints (CRUD + List)
+- Plans: 5 endpoints (CRUD + List)
+- Payments: 5 endpoints (List, Retrieve, Refund, Retry, Void)
+- Invoices: 8 endpoints (4 API + 4 Webhooks)
+- Transfers: 3 endpoints (List, Create, Retrieve)
+- Ledger accounts: 1 endpoint (Retrieve)
+- Checkout configurations: 3 endpoints (List, Create, Retrieve)
+
+### Admin (6 sections, 20 endpoints)
+- Companies: 1 endpoint (Retrieve)
+- Members: 2 endpoints (List, Retrieve)
+- Memberships: 6 endpoints (List, Retrieve, Update, Cancel, Pause, Resume)
+- Entries: 4 endpoints (List, Retrieve, Approve, Deny)
+- Shipments: 3 endpoints (List, Create, Retrieve)
+- Authorized users: 2 endpoints (List, Retrieve)
+
+### Content (9 sections, 22 endpoints)
+- Users: 2 endpoints (Retrieve, Check access)
+- Experiences: 7 endpoints (CRUD + List + Attach/Detach)
+- Forum posts: 3 endpoints (List, Create, Retrieve)
+- Forums: 3 endpoints (List, Retrieve, Update)
+- Messages: 3 endpoints (List, Create, Retrieve)
+- Chat channels: 3 endpoints (List, Retrieve, Update)
+- Support channels: 3 endpoints (List, Create, Retrieve)
+- Reactions: 3 endpoints (List, Create, Retrieve)
+- Course lesson interactions: 2 endpoints (List, Retrieve)
+
+### Developer (2 sections, 8 endpoints)
+- Apps: 4 endpoints (CRUD + List)
+- App builds: 4 endpoints (List, Create, Retrieve, Promote)
+
+## Total: 78 REST API Endpoints
+
+## SDK Installation
+
+```bash
+npm install @whop/sdk
+```
+
+## Basic Usage
+
+```javascript
+import Whop from '@whop/sdk';
+
+const client = new Whop({
+  appID: 'app_xxxxxxxxxxxxxx',
+  apiKey: 'your-api-key',
+});
+
+// Example: List products
+const products = await client.products.list();
+
+// Example: Create a plan
+const plan = await client.plans.create({
+  product_id: 'prod_xxxxx',
+  price: 29.99,
+  interval: 'month'
+});
+```
+
+## Authentication
+
+All endpoints require an API key in the header:
+```
+Authorization: Bearer your-api-key-here
+```
+
+Get your API key from: `/dashboard/developer`
+
+## Pagination
+
+Most list endpoints support cursor-based pagination:
+- `after` - Returns elements after this cursor
+- `before` - Returns elements before this cursor
+- `first` - Number of elements to return (forward pagination)
+- `last` - Number of elements to return (backward pagination)
+
+Response includes `page_info`:
+```json
+{
+  "page_info": {
+    "end_cursor": "cursor_string",
+    "start_cursor": "cursor_string",
+    "has_next_page": true,
+    "has_previous_page": false
+  }
+}
+```
+
+## Common Patterns
+
+### CRUD Operations
+Most resources follow RESTful patterns:
+- **GET** `/resource` - List resources
+- **POST** `/resource` - Create resource
+- **GET** `/resource/{id}` - Retrieve specific resource
+- **PATCH** `/resource/{id}` - Update resource
+- **DELETE** `/resource/{id}` - Delete resource
+
+### Webhooks
+Invoice events provide webhook endpoints for real-time notifications:
+- Invoice created
+- Invoice paid
+- Invoice past due
+- Invoice voided
+
+## Key Resources
+
+### Products & Plans
+Products (Access Passes) define what you're selling.
+Plans define how customers pay (pricing, intervals, checkout links).
+
+### Memberships vs Members
+- **Member**: A user in a company (can have multiple memberships)
+- **Membership**: Active subscription to a specific product/plan
+
+### Experiences
+App instances on a company. When an app is installed, it creates an experience.
+Multiple experiences = multiple installations of the same app.
+
+### Authorized Users
+Team members/admins of a company with elevated permissions.
+
+### Entries
+Waitlist entries for products with waitlist release method.
+
+## Notes
+
+- All IDs use Whop's tag format (e.g., `app_xxxxx`, `biz_xxxxx`, `user_xxxxx`)
+- Timestamps are in ISO 8601 format
+- Currency codes follow ISO 4217 (USD, EUR, GBP, etc.)
+- The SDK handles pagination automatically with async iterators
+

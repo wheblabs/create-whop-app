@@ -1,0 +1,671 @@
+---
+alwaysApply: true
+---
+# Whop API - Instructions for LLM Agents
+
+## Critical: Use ONLY the Current REST API
+
+**Package**: `@whop/sdk`  
+**Documentation**: https://docs.whop.com/apps/api/getting-started  
+**Status**: ✅ Current, actively maintained, fully supported
+
+### DO Use
+- `@whop/sdk` package (REST API)
+- Snake_case property names (`company_id`, `base_url`, `product_id`)
+- Official documentation at https://docs.whop.com/
+
+### DO NOT Use
+- ❌ `@whop/api` package (deprecated)
+- ❌ GraphQL SDK (deprecated)
+- ❌ API v2 (deprecated)
+- ❌ API v5 (deprecated)
+- ❌ Internal GraphQL API (not public, unsupported)
+- ❌ CamelCase property names in REST API calls
+
+## What the REST API Can Do
+
+### ✅ Supported Operations
+
+#### App Development
+- Create, update, retrieve, and list apps
+- Create and manage app builds for iOS, Android, Web
+- Promote builds to production
+- Configure app URLs (production, dev, preview)
+- Set app permissions and OAuth scopes
+
+#### Products & Monetization
+- Create, update, delete, and list products (access passes)
+- Create, update, delete, and list plans (checkout links)
+- Get checkout URLs via `direct_link` field on plans
+- Configure pricing (one-time, recurring, expiring)
+- Set up payment methods (card, PayPal, ACH, etc.)
+- Configure trials and discounts
+
+#### Payment Processing
+- List and retrieve payments
+- Refund, retry, and void payments
+- Create and manage invoices
+- Process transfers to creators
+- Access ledger account balances
+- Configure checkout settings
+
+#### Company & Member Management
+- Retrieve company information
+- List and retrieve members
+- List and manage memberships (cancel, pause, resume)
+- Manage authorized users (admins)
+- Approve/deny waitlist entries
+- Create and track shipments
+
+#### Content & Communication
+- Retrieve user information and check access
+- Create, update, and manage experiences (app instances)
+- Attach/detach experiences to products
+- Create and list forum posts
+- Update forum settings
+- Send direct messages (DMs)
+- Create and manage chat channels
+- Create and manage support channels
+- Add reactions to messages
+- Track course lesson interactions
+
+#### Special Features
+- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
+- **Webhooks**: Invoice events (created, paid, past due, voided)
+- **Pagination**: Automatic via async iterators
+- **Access Control**: Check if users have access to products
+
+### ❌ What the REST API Cannot Do
+
+The REST API does **NOT** support:
+- Advanced GraphQL-style queries with custom field selection
+- Nested mutations in a single request
+- Direct database schema access
+- Creating companies (companies must exist first)
+- Complex filtering beyond what's exposed in query parameters
+- Batch operations (must make individual calls)
+- Real-time subscriptions (use webhooks instead)
+- Custom SQL-like queries
+
+## Finding Documentation
+
+### Primary Sources (Always Check First)
+
+1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
+   - Complete API reference with examples
+   - All endpoints documented
+   - Request/response schemas
+   
+2. **SDK Documentation**: https://docs.whop.com/api-reference/
+   - Individual endpoint pages
+   - Code examples in JavaScript
+   - Query parameters and response formats
+
+3. **App Development Guide**: https://docs.whop.com/apps
+   - High-level concepts
+   - OAuth and authentication flows
+   - Webhooks and event handling
+
+### When Documentation is Insufficient
+
+If the official docs don't have the information you need:
+
+#### Use Exa MCP for Additional Context
+
+```typescript
+// Example: Search for Whop SDK usage patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop SDK @whop/sdk create product with plans example"
+})
+
+// Example: Find implementation details
+mcp_exa_get_code_context_exa({
+  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
+})
+
+// Example: Find error handling patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop SDK error handling payment refund retry"
+})
+```
+
+#### When to Use Exa MCP
+- Official docs don't cover your specific use case
+- Need real-world code examples
+- Looking for error handling patterns
+- Want to see how others have implemented features
+- Need to understand undocumented behavior
+- Troubleshooting specific errors
+
+#### What to Search For
+- Package name: `@whop/sdk`
+- Specific methods: `client.products.create`, `client.plans.update`
+- Error messages you're encountering
+- Feature combinations: "Whop SDK create product with multiple plans"
+- Integration patterns: "Whop webhook invoice paid handle"
+
+## SDK Structure
+
+### Client Initialization
+```typescript
+import Whop from '@whop/sdk';
+
+const client = new Whop({
+  appID: 'app_xxxxxxxxxxxxxx',
+  apiKey: process.env.WHOP_API_KEY,
+});
+```
+
+### Resource Methods Pattern
+All resources follow the same pattern:
+
+```typescript
+// List resources (returns async iterator)
+for await (const item of client.resource.list(params)) {
+  // Process items
+}
+
+// Create resource
+const created = await client.resource.create(data);
+
+// Retrieve resource
+const item = await client.resource.retrieve(id);
+
+// Update resource
+const updated = await client.resource.update(id, data);
+
+// Delete resource (where available)
+await client.resource.delete(id);
+```
+
+### Available Resources
+```typescript
+client.apps
+client.appBuilds
+client.products
+client.plans
+client.payments
+client.invoices
+client.transfers
+client.ledgerAccounts
+client.checkoutConfigurations
+client.companies
+client.members
+client.memberships
+client.entries
+client.shipments
+client.authorizedUsers
+client.users
+client.experiences
+client.forumPosts
+client.forums
+client.messages
+client.chatChannels
+client.supportChannels
+client.reactions
+client.courseLessonInteractions
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Wrong: Using camelCase
+```typescript
+await client.products.create({
+  companyId: "biz_123",    // Wrong!
+  baseUrl: "https://..."   // Wrong!
+});
+```
+
+### ✅ Correct: Using snake_case
+```typescript
+await client.products.create({
+  company_id: "biz_123",   // Correct
+  base_url: "https://..."  // Correct
+});
+```
+
+### ❌ Wrong: Using deprecated packages
+```typescript
+import { WhopAPI } from '@whop/api';  // Deprecated!
+```
+
+### ✅ Correct: Using current SDK
+```typescript
+import Whop from '@whop/sdk';  // Current
+```
+
+### ❌ Wrong: Manual pagination
+```typescript
+let cursor = null;
+while (true) {
+  const response = await fetch(`/api?after=${cursor}`);
+  // Manual handling...
+}
+```
+
+### ✅ Correct: Async iterator pagination
+```typescript
+for await (const item of client.products.list()) {
+  // SDK handles pagination automatically
+}
+```
+
+## Error Handling
+
+```typescript
+try {
+  const plan = await client.plans.create({
+    product_id: "prod_123",
+    title: "Monthly Plan",
+    renewal_price: 29.99,
+    base_currency: "USD",
+    billing_period: 30
+  });
+} catch (error) {
+  if (error.statusCode === 422) {
+    console.error('Validation error:', error.message);
+  } else if (error.statusCode === 404) {
+    console.error('Product not found');
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## Quick Reference
+
+### Product Creation Flow
+```typescript
+// 1. Create product
+const product = await client.products.create({
+  title: "My Product",
+  company_id: "biz_123",
+  visibility: "visible"
+});
+
+// 2. Create plan
+const plan = await client.plans.create({
+  product_id: product.id,
+  title: "Monthly",
+  plan_type: "renewal",
+  renewal_price: 29.99,
+  base_currency: "USD",
+  billing_period: 30
+});
+
+// 3. Share checkout link
+console.log(plan.direct_link);
+```
+
+### App Creation Flow
+```typescript
+// 1. Create app
+const app = await client.apps.create({
+  name: "My App",
+  base_url: "https://myapp.com",
+  company_id: "biz_123"
+});
+
+// 2. Update app configuration
+await client.apps.update(app.id, {
+  base_dev_url: "http://localhost:3000",
+  description: "My app description"
+});
+```
+
+## Support & Resources
+
+- **Official Docs**: https://docs.whop.com/
+- **API Reference**: https://docs.whop.com/api-reference/
+- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
+
+## Summary for LLM Agents
+
+1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+2. **ALWAYS** use `snake_case` for REST API property names
+3. **CHECK** official docs first: https://docs.whop.com/
+4. **USE** Exa MCP when docs are insufficient or unclear
+5. **REMEMBER** the terminology mappings (Product = Access Pass, Plan = Checkout Link)
+6. **VALIDATE** routes: lowercase, alphanumeric, hyphens only, 2-100 chars
+7. **HANDLE** errors properly with try/catch
+8. **LEVERAGE** async iterators for pagination
+9. **TEST** thoroughly before deploying
+
+When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
+
+# Whop API - Instructions for LLM Agents
+
+## Critical: Use ONLY the Current REST API
+
+**Package**: `@whop/sdk`  
+**Documentation**: https://docs.whop.com/apps/api/getting-started  
+**Status**: ✅ Current, actively maintained, fully supported
+
+### DO Use
+- `@whop/sdk` package (REST API)
+- Snake_case property names (`company_id`, `base_url`, `product_id`)
+- Official documentation at https://docs.whop.com/
+
+### DO NOT Use
+- ❌ `@whop/api` package (deprecated)
+- ❌ GraphQL SDK (deprecated)
+- ❌ API v2 (deprecated)
+- ❌ API v5 (deprecated)
+- ❌ Internal GraphQL API (not public, unsupported)
+- ❌ CamelCase property names in REST API calls
+
+## What the REST API Can Do
+
+### ✅ Supported Operations
+
+#### App Development
+- Create, update, retrieve, and list apps
+- Create and manage app builds for iOS, Android, Web
+- Promote builds to production
+- Configure app URLs (production, dev, preview)
+- Set app permissions and OAuth scopes
+
+#### Products & Monetization
+- Create, update, delete, and list products (access passes)
+- Create, update, delete, and list plans (checkout links)
+- Get checkout URLs via `direct_link` field on plans
+- Configure pricing (one-time, recurring, expiring)
+- Set up payment methods (card, PayPal, ACH, etc.)
+- Configure trials and discounts
+
+#### Payment Processing
+- List and retrieve payments
+- Refund, retry, and void payments
+- Create and manage invoices
+- Process transfers to creators
+- Access ledger account balances
+- Configure checkout settings
+
+#### Company & Member Management
+- Retrieve company information
+- List and retrieve members
+- List and manage memberships (cancel, pause, resume)
+- Manage authorized users (admins)
+- Approve/deny waitlist entries
+- Create and track shipments
+
+#### Content & Communication
+- Retrieve user information and check access
+- Create, update, and manage experiences (app instances)
+- Attach/detach experiences to products
+- Create and list forum posts
+- Update forum settings
+- Send direct messages (DMs)
+- Create and manage chat channels
+- Create and manage support channels
+- Add reactions to messages
+- Track course lesson interactions
+
+#### Special Features
+- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
+- **Webhooks**: Invoice events (created, paid, past due, voided)
+- **Pagination**: Automatic via async iterators
+- **Access Control**: Check if users have access to products
+
+### ❌ What the REST API Cannot Do
+
+The REST API does **NOT** support:
+- Advanced GraphQL-style queries with custom field selection
+- Nested mutations in a single request
+- Direct database schema access
+- Creating companies (companies must exist first)
+- Complex filtering beyond what's exposed in query parameters
+- Batch operations (must make individual calls)
+- Real-time subscriptions (use webhooks instead)
+- Custom SQL-like queries
+
+## Finding Documentation
+
+### Primary Sources (Always Check First)
+
+1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
+   - Complete API reference with examples
+   - All endpoints documented
+   - Request/response schemas
+   
+2. **SDK Documentation**: https://docs.whop.com/api-reference/
+   - Individual endpoint pages
+   - Code examples in JavaScript
+   - Query parameters and response formats
+
+3. **App Development Guide**: https://docs.whop.com/apps
+   - High-level concepts
+   - OAuth and authentication flows
+   - Webhooks and event handling
+
+### When Documentation is Insufficient
+
+If the official docs don't have the information you need:
+
+#### Use Exa MCP for Additional Context
+
+```typescript
+// Example: Search for Whop SDK usage patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop SDK @whop/sdk create product with plans example"
+})
+
+// Example: Find implementation details
+mcp_exa_get_code_context_exa({
+  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
+})
+
+// Example: Find error handling patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop SDK error handling payment refund retry"
+})
+```
+
+#### When to Use Exa MCP
+- Official docs don't cover your specific use case
+- Need real-world code examples
+- Looking for error handling patterns
+- Want to see how others have implemented features
+- Need to understand undocumented behavior
+- Troubleshooting specific errors
+
+#### What to Search For
+- Package name: `@whop/sdk`
+- Specific methods: `client.products.create`, `client.plans.update`
+- Error messages you're encountering
+- Feature combinations: "Whop SDK create product with multiple plans"
+- Integration patterns: "Whop webhook invoice paid handle"
+
+## SDK Structure
+
+### Client Initialization
+```typescript
+import Whop from '@whop/sdk';
+
+const client = new Whop({
+  appID: 'app_xxxxxxxxxxxxxx',
+  apiKey: process.env.WHOP_API_KEY,
+});
+```
+
+### Resource Methods Pattern
+All resources follow the same pattern:
+
+```typescript
+// List resources (returns async iterator)
+for await (const item of client.resource.list(params)) {
+  // Process items
+}
+
+// Create resource
+const created = await client.resource.create(data);
+
+// Retrieve resource
+const item = await client.resource.retrieve(id);
+
+// Update resource
+const updated = await client.resource.update(id, data);
+
+// Delete resource (where available)
+await client.resource.delete(id);
+```
+
+### Available Resources
+```typescript
+client.apps
+client.appBuilds
+client.products
+client.plans
+client.payments
+client.invoices
+client.transfers
+client.ledgerAccounts
+client.checkoutConfigurations
+client.companies
+client.members
+client.memberships
+client.entries
+client.shipments
+client.authorizedUsers
+client.users
+client.experiences
+client.forumPosts
+client.forums
+client.messages
+client.chatChannels
+client.supportChannels
+client.reactions
+client.courseLessonInteractions
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Wrong: Using camelCase
+```typescript
+await client.products.create({
+  companyId: "biz_123",    // Wrong!
+  baseUrl: "https://..."   // Wrong!
+});
+```
+
+### ✅ Correct: Using snake_case
+```typescript
+await client.products.create({
+  company_id: "biz_123",   // Correct
+  base_url: "https://..."  // Correct
+});
+```
+
+### ❌ Wrong: Using deprecated packages
+```typescript
+import { WhopAPI } from '@whop/api';  // Deprecated!
+```
+
+### ✅ Correct: Using current SDK
+```typescript
+import Whop from '@whop/sdk';  // Current
+```
+
+### ❌ Wrong: Manual pagination
+```typescript
+let cursor = null;
+while (true) {
+  const response = await fetch(`/api?after=${cursor}`);
+  // Manual handling...
+}
+```
+
+### ✅ Correct: Async iterator pagination
+```typescript
+for await (const item of client.products.list()) {
+  // SDK handles pagination automatically
+}
+```
+
+## Error Handling
+
+```typescript
+try {
+  const plan = await client.plans.create({
+    product_id: "prod_123",
+    title: "Monthly Plan",
+    renewal_price: 29.99,
+    base_currency: "USD",
+    billing_period: 30
+  });
+} catch (error) {
+  if (error.statusCode === 422) {
+    console.error('Validation error:', error.message);
+  } else if (error.statusCode === 404) {
+    console.error('Product not found');
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## Quick Reference
+
+### Product Creation Flow
+```typescript
+// 1. Create product
+const product = await client.products.create({
+  title: "My Product",
+  company_id: "biz_123",
+  visibility: "visible"
+});
+
+// 2. Create plan
+const plan = await client.plans.create({
+  product_id: product.id,
+  title: "Monthly",
+  plan_type: "renewal",
+  renewal_price: 29.99,
+  base_currency: "USD",
+  billing_period: 30
+});
+
+// 3. Share checkout link
+console.log(plan.direct_link);
+```
+
+### App Creation Flow
+```typescript
+// 1. Create app
+const app = await client.apps.create({
+  name: "My App",
+  base_url: "https://myapp.com",
+  company_id: "biz_123"
+});
+
+// 2. Update app configuration
+await client.apps.update(app.id, {
+  base_dev_url: "http://localhost:3000",
+  description: "My app description"
+});
+```
+
+## Support & Resources
+
+- **Official Docs**: https://docs.whop.com/
+- **API Reference**: https://docs.whop.com/api-reference/
+- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
+
+## Summary for LLM Agents
+
+1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+2. **ALWAYS** use `snake_case` for REST API property names
+3. **CHECK** official docs first: https://docs.whop.com/
+4. **USE** Exa MCP when docs are insufficient or unclear
+5. **REMEMBER** the terminology mappings (Product = Access Pass, Plan = Checkout Link)
+6. **VALIDATE** routes: lowercase, alphanumeric, hyphens only, 2-100 chars
+7. **HANDLE** errors properly with try/catch
+8. **LEVERAGE** async iterators for pagination
+9. **TEST** thoroughly before deploying
+
+When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
+
