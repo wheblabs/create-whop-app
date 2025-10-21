@@ -191,15 +191,15 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 ## SDK Installation
 
 ```bash
-npm install @whop/sdk
+npm install @whop/api
 ```
 
 ## Basic Usage
 
 ```javascript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: 'your-api-key',
 });
@@ -477,15 +477,15 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 ## SDK Installation
 
 ```bash
-npm install @whop/sdk
+npm install @whop/api
 ```
 
 ## Basic Usage
 
 ```javascript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: 'your-api-key',
 });

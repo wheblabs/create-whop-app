@@ -3,19 +3,19 @@ alwaysApply: true
 ---
 # Whop API - Instructions for LLM Agents
 
-## Critical: Use ONLY the Current REST API
+## Critical: Use ONLY the Recommended API Package
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Current, actively maintained, fully supported
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/sdk` package (REST API)
+- `@whop/api` package (complete REST API implementation)
 - Snake_case property names (`company_id`, `base_url`, `product_id`)
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
-- ❌ `@whop/api` package (deprecated)
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
@@ -50,9 +50,9 @@ function ExperiencePage() {
 Once you have the experience ID, you can fetch the experience to get the company ID:
 
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -188,7 +188,7 @@ If the official docs don't have the information you need:
 ```typescript
 // Example: Search for Whop SDK usage patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK @whop/sdk create product with plans example"
+  query: "Whop API @whop/api create product with plans example"
 })
 
 // Example: Find implementation details
@@ -198,7 +198,7 @@ mcp_exa_get_code_context_exa({
 
 // Example: Find error handling patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK error handling payment refund retry"
+  query: "Whop API @whop/api error handling payment refund retry"
 })
 ```
 
@@ -211,19 +211,19 @@ mcp_exa_get_code_context_exa({
 - Troubleshooting specific errors
 
 #### What to Search For
-- Package name: `@whop/sdk`
+- Package name: `@whop/api`
 - Specific methods: `client.products.create`, `client.plans.update`
 - Error messages you're encountering
-- Feature combinations: "Whop SDK create product with multiple plans"
+- Feature combinations: "Whop API create product with multiple plans"
 - Integration patterns: "Whop webhook invoice paid handle"
 
 ## SDK Structure
 
 ### Client Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -409,14 +409,14 @@ await client.products.create({
 });
 ```
 
-### ❌ Wrong: Using deprecated packages
+### ❌ Wrong: Using limited SDK
 ```typescript
-import { WhopAPI } from '@whop/api';  // Deprecated!
+import Whop from '@whop/sdk';  // Missing some functionality!
 ```
 
-### ✅ Correct: Using current SDK
+### ✅ Correct: Using complete API package
 ```typescript
-import Whop from '@whop/sdk';  // Current
+import { WhopAPI } from '@whop/api';  // Recommended
 ```
 
 ### ❌ Wrong: Manual pagination
@@ -502,13 +502,13 @@ await client.apps.update(app.id, {
 
 - **Official Docs**: https://docs.whop.com/
 - **API Reference**: https://docs.whop.com/api-reference/
-- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **API Package**: https://www.npmjs.com/package/@whop/api
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+1. **ALWAYS** use `@whop/api` - it contains full functionality
 2. **ALWAYS** use `snake_case` for REST API property names
 3. **CHECK** official docs first: https://docs.whop.com/
 4. **USE** Exa MCP when docs are insufficient or unclear
@@ -522,19 +522,19 @@ When in doubt, consult the official documentation or use Exa MCP to find real-wo
 
 # Whop API - Instructions for LLM Agents
 
-## Critical: Use ONLY the Current REST API
+## Critical: Use ONLY the Recommended API Package
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Current, actively maintained, fully supported
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/sdk` package (REST API)
+- `@whop/api` package (complete REST API implementation)
 - Snake_case property names (`company_id`, `base_url`, `product_id`)
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
-- ❌ `@whop/api` package (deprecated)
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
@@ -634,7 +634,7 @@ If the official docs don't have the information you need:
 ```typescript
 // Example: Search for Whop SDK usage patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK @whop/sdk create product with plans example"
+  query: "Whop API @whop/api create product with plans example"
 })
 
 // Example: Find implementation details
@@ -644,7 +644,7 @@ mcp_exa_get_code_context_exa({
 
 // Example: Find error handling patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK error handling payment refund retry"
+  query: "Whop API @whop/api error handling payment refund retry"
 })
 ```
 
@@ -657,19 +657,19 @@ mcp_exa_get_code_context_exa({
 - Troubleshooting specific errors
 
 #### What to Search For
-- Package name: `@whop/sdk`
+- Package name: `@whop/api`
 - Specific methods: `client.products.create`, `client.plans.update`
 - Error messages you're encountering
-- Feature combinations: "Whop SDK create product with multiple plans"
+- Feature combinations: "Whop API create product with multiple plans"
 - Integration patterns: "Whop webhook invoice paid handle"
 
 ## SDK Structure
 
 ### Client Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -855,14 +855,14 @@ await client.products.create({
 });
 ```
 
-### ❌ Wrong: Using deprecated packages
+### ❌ Wrong: Using limited SDK
 ```typescript
-import { WhopAPI } from '@whop/api';  // Deprecated!
+import Whop from '@whop/sdk';  // Missing some functionality!
 ```
 
-### ✅ Correct: Using current SDK
+### ✅ Correct: Using complete API package
 ```typescript
-import Whop from '@whop/sdk';  // Current
+import { WhopAPI } from '@whop/api';  // Recommended
 ```
 
 ### ❌ Wrong: Manual pagination
@@ -948,13 +948,13 @@ await client.apps.update(app.id, {
 
 - **Official Docs**: https://docs.whop.com/
 - **API Reference**: https://docs.whop.com/api-reference/
-- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **API Package**: https://www.npmjs.com/package/@whop/api
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+1. **ALWAYS** use `@whop/api` - it contains full functionality
 2. **ALWAYS** use `snake_case` for REST API property names
 3. **CHECK** official docs first: https://docs.whop.com/
 4. **USE** Exa MCP when docs are insufficient or unclear

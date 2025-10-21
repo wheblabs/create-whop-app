@@ -113,19 +113,19 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 
 # Whop API - Instructions for LLM Agents
 
-## Critical: Use ONLY the Current REST API
+## Critical: Use ONLY the Recommended API Package
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Current, actively maintained, fully supported
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/sdk` package (REST API)
+- `@whop/api` package (complete REST API implementation)
 - Snake_case property names (`company_id`, `base_url`, `product_id`)
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
-- ❌ `@whop/api` package (deprecated)
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
@@ -225,7 +225,7 @@ If the official docs don't have the information you need:
 ```typescript
 // Example: Search for Whop SDK usage patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK @whop/sdk create product with plans example"
+  query: "Whop API @whop/api create product with plans example"
 })
 
 // Example: Find implementation details
@@ -235,7 +235,7 @@ mcp_exa_get_code_context_exa({
 
 // Example: Find error handling patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK error handling payment refund retry"
+  query: "Whop API @whop/api error handling payment refund retry"
 })
 ```
 
@@ -248,19 +248,19 @@ mcp_exa_get_code_context_exa({
 - Troubleshooting specific errors
 
 #### What to Search For
-- Package name: `@whop/sdk`
+- Package name: `@whop/api`
 - Specific methods: `client.products.create`, `client.plans.update`
 - Error messages you're encountering
-- Feature combinations: "Whop SDK create product with multiple plans"
+- Feature combinations: "Whop API create product with multiple plans"
 - Integration patterns: "Whop webhook invoice paid handle"
 
 ## SDK Structure
 
 ### Client Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -334,14 +334,14 @@ await client.products.create({
 });
 ```
 
-### ❌ Wrong: Using deprecated packages
+### ❌ Wrong: Using limited SDK
 ```typescript
-import { WhopAPI } from '@whop/api';  // Deprecated!
+import Whop from '@whop/sdk';  // Missing some functionality!
 ```
 
-### ✅ Correct: Using current SDK
+### ✅ Correct: Using complete API package
 ```typescript
-import Whop from '@whop/sdk';  // Current
+import { WhopAPI } from '@whop/api';  // Recommended
 ```
 
 ### ❌ Wrong: Manual pagination
@@ -427,13 +427,13 @@ await client.apps.update(app.id, {
 
 - **Official Docs**: https://docs.whop.com/
 - **API Reference**: https://docs.whop.com/api-reference/
-- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **API Package**: https://www.npmjs.com/package/@whop/api
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+1. **ALWAYS** use `@whop/api` - it contains full functionality
 2. **ALWAYS** use `snake_case` for REST API property names
 3. **CHECK** official docs first: https://docs.whop.com/
 4. **USE** Exa MCP when docs are insufficient or unclear
@@ -447,19 +447,19 @@ When in doubt, consult the official documentation or use Exa MCP to find real-wo
 
 # Whop API - Instructions for LLM Agents
 
-## Critical: Use ONLY the Current REST API
+## Critical: Use ONLY the Recommended API Package
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Current, actively maintained, fully supported
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/sdk` package (REST API)
+- `@whop/api` package (complete REST API implementation)
 - Snake_case property names (`company_id`, `base_url`, `product_id`)
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
-- ❌ `@whop/api` package (deprecated)
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
@@ -559,7 +559,7 @@ If the official docs don't have the information you need:
 ```typescript
 // Example: Search for Whop SDK usage patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK @whop/sdk create product with plans example"
+  query: "Whop API @whop/api create product with plans example"
 })
 
 // Example: Find implementation details
@@ -569,7 +569,7 @@ mcp_exa_get_code_context_exa({
 
 // Example: Find error handling patterns
 mcp_exa_get_code_context_exa({
-  query: "Whop SDK error handling payment refund retry"
+  query: "Whop API @whop/api error handling payment refund retry"
 })
 ```
 
@@ -582,19 +582,19 @@ mcp_exa_get_code_context_exa({
 - Troubleshooting specific errors
 
 #### What to Search For
-- Package name: `@whop/sdk`
+- Package name: `@whop/api`
 - Specific methods: `client.products.create`, `client.plans.update`
 - Error messages you're encountering
-- Feature combinations: "Whop SDK create product with multiple plans"
+- Feature combinations: "Whop API create product with multiple plans"
 - Integration patterns: "Whop webhook invoice paid handle"
 
 ## SDK Structure
 
 ### Client Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -668,14 +668,14 @@ await client.products.create({
 });
 ```
 
-### ❌ Wrong: Using deprecated packages
+### ❌ Wrong: Using limited SDK
 ```typescript
-import { WhopAPI } from '@whop/api';  // Deprecated!
+import Whop from '@whop/sdk';  // Missing some functionality!
 ```
 
-### ✅ Correct: Using current SDK
+### ✅ Correct: Using complete API package
 ```typescript
-import Whop from '@whop/sdk';  // Current
+import { WhopAPI } from '@whop/api';  // Recommended
 ```
 
 ### ❌ Wrong: Manual pagination
@@ -761,13 +761,13 @@ await client.apps.update(app.id, {
 
 - **Official Docs**: https://docs.whop.com/
 - **API Reference**: https://docs.whop.com/api-reference/
-- **SDK Package**: https://www.npmjs.com/package/@whop/sdk
+- **API Package**: https://www.npmjs.com/package/@whop/api
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/sdk` - never deprecated packages
+1. **ALWAYS** use `@whop/api` - it contains full functionality
 2. **ALWAYS** use `snake_case` for REST API property names
 3. **CHECK** official docs first: https://docs.whop.com/
 4. **USE** Exa MCP when docs are insufficient or unclear
@@ -917,10 +917,10 @@ Creators can paywall:
 
 ### Current API: REST API (Recommended)
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started
 
-This is the **current, supported API** for building Whop apps.
+This is the **recommended API package** for building Whop apps with full functionality.
 
 #### Capabilities:
 - **App Configuration** - Set up URLs, permissions, settings
@@ -945,17 +945,19 @@ This is the **current, supported API** for building Whop apps.
 - **Authorized Users** - Manage admins and team members
 - **Users** - User profiles, data, and settings
 
+### Alternative SDK (Limited Functionality)
+
+**Package**: `@whop/sdk`  
+**Status**: Newer but missing some functionality - use `@whop/api` instead
+
 ### Deprecated APIs (Legacy)
 
-**Package**: `@whop/api`  
-**Status**: Deprecated - Do not use for new development
-
-Includes older API versions:
+The following are truly deprecated:
 - **GraphQL SDK** - Original GraphQL-based API
 - **v2** - Second iteration
 - **v5** - Third iteration
 
-These are maintained for backward compatibility but should not be used in new projects.
+These are maintained for backward compatibility only.
 
 ### Internal Frontend API (Not Public)
 
@@ -965,7 +967,7 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 - Company management internals
 - Direct database operations
 
-**For app development, always use the public REST API (`@whop/sdk`).**
+**For app development, always use the public REST API (`@whop/api`).**
 
 ## Development Workflow
 
@@ -973,9 +975,9 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 1. **Create the app** under your company
    ```typescript
-   import Whop from '@whop/sdk';
+   import { WhopAPI } from '@whop/api';
    
-   const client = new Whop({
+   const client = new WhopAPI({
      appID: 'app_xxxxxxxxxxxxxx',
      apiKey: process.env.WHOP_API_KEY,
    });
@@ -1076,9 +1078,9 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -1122,7 +1124,7 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 - **Official Documentation**: https://docs.whop.com/
 - **REST API Docs**: https://docs.whop.com/apps/api/getting-started
 - **App Development**: https://docs.whop.com/apps
-- **SDK Package**: `@whop/sdk` (npm)
+- **SDK Package**: `@whop/api` (npm)
 
 ## Common API Examples
 
@@ -1199,7 +1201,7 @@ for await (const exp of experiences) {
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/sdk`) for app development
+1. **Always use the public REST API** (`@whop/api`) for app development
 2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
@@ -1214,7 +1216,7 @@ for await (const exp of experiences) {
 
 ### API Usage
 - The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/sdk` (REST API)
+- When building Whop apps, ONLY use `@whop/api` (REST API)
 - **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
 - **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
 
@@ -1233,9 +1235,9 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
   apiKey: process.env.WHOP_API_KEY, // Your API key
 });
@@ -1387,10 +1389,10 @@ Creators can paywall:
 
 ### Current API: REST API (Recommended)
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started
 
-This is the **current, supported API** for building Whop apps.
+This is the **recommended API package** for building Whop apps with full functionality.
 
 #### Capabilities:
 - **App Configuration** - Set up URLs, permissions, settings
@@ -1415,17 +1417,19 @@ This is the **current, supported API** for building Whop apps.
 - **Authorized Users** - Manage admins and team members
 - **Users** - User profiles, data, and settings
 
+### Alternative SDK (Limited Functionality)
+
+**Package**: `@whop/sdk`  
+**Status**: Newer but missing some functionality - use `@whop/api` instead
+
 ### Deprecated APIs (Legacy)
 
-**Package**: `@whop/api`  
-**Status**: Deprecated - Do not use for new development
-
-Includes older API versions:
+The following are truly deprecated:
 - **GraphQL SDK** - Original GraphQL-based API
 - **v2** - Second iteration
 - **v5** - Third iteration
 
-These are maintained for backward compatibility but should not be used in new projects.
+These are maintained for backward compatibility only.
 
 ### Internal Frontend API (Not Public)
 
@@ -1435,7 +1439,7 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 - Company management internals
 - Direct database operations
 
-**For app development, always use the public REST API (`@whop/sdk`).**
+**For app development, always use the public REST API (`@whop/api`).**
 
 ## Development Workflow
 
@@ -1443,9 +1447,9 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 1. **Create the app** under your company
    ```typescript
-   import Whop from '@whop/sdk';
+   import { WhopAPI } from '@whop/api';
    
-   const client = new Whop({
+   const client = new WhopAPI({
      appID: 'app_xxxxxxxxxxxxxx',
      apiKey: process.env.WHOP_API_KEY,
    });
@@ -1546,9 +1550,9 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -1592,7 +1596,7 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 - **Official Documentation**: https://docs.whop.com/
 - **REST API Docs**: https://docs.whop.com/apps/api/getting-started
 - **App Development**: https://docs.whop.com/apps
-- **SDK Package**: `@whop/sdk` (npm)
+- **SDK Package**: `@whop/api` (npm)
 
 ## Common API Examples
 
@@ -1669,7 +1673,7 @@ for await (const exp of experiences) {
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/sdk`) for app development
+1. **Always use the public REST API** (`@whop/api`) for app development
 2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
@@ -1684,7 +1688,7 @@ for await (const exp of experiences) {
 
 ### API Usage
 - The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/sdk` (REST API)
+- When building Whop apps, ONLY use `@whop/api` (REST API)
 - **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
 - **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
 
@@ -1703,9 +1707,9 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
   apiKey: process.env.WHOP_API_KEY, // Your API key
 });
@@ -1910,15 +1914,15 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 ## SDK Installation
 
 ```bash
-npm install @whop/sdk
+npm install @whop/api
 ```
 
 ## Basic Usage
 
 ```javascript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: 'your-api-key',
 });
@@ -2196,15 +2200,15 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 ## SDK Installation
 
 ```bash
-npm install @whop/sdk
+npm install @whop/api
 ```
 
 ## Basic Usage
 
 ```javascript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: 'your-api-key',
 });

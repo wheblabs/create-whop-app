@@ -139,10 +139,10 @@ Creators can paywall:
 
 ### Current API: REST API (Recommended)
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started
 
-This is the **current, supported API** for building Whop apps.
+This is the **recommended API package** for building Whop apps with full functionality.
 
 #### Capabilities:
 - **App Configuration** - Set up URLs, permissions, settings
@@ -167,17 +167,19 @@ This is the **current, supported API** for building Whop apps.
 - **Authorized Users** - Manage admins and team members
 - **Users** - User profiles, data, and settings
 
+### Alternative SDK (Limited Functionality)
+
+**Package**: `@whop/sdk`  
+**Status**: Newer but missing some functionality - use `@whop/api` instead
+
 ### Deprecated APIs (Legacy)
 
-**Package**: `@whop/api`  
-**Status**: Deprecated - Do not use for new development
-
-Includes older API versions:
+The following are truly deprecated:
 - **GraphQL SDK** - Original GraphQL-based API
 - **v2** - Second iteration
 - **v5** - Third iteration
 
-These are maintained for backward compatibility but should not be used in new projects.
+These are maintained for backward compatibility only.
 
 ### Internal Frontend API (Not Public)
 
@@ -187,7 +189,7 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 - Company management internals
 - Direct database operations
 
-**For app development, always use the public REST API (`@whop/sdk`).**
+**For app development, always use the public REST API (`@whop/api`).**
 
 ## Development Workflow
 
@@ -195,9 +197,9 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 1. **Create the app** under your company
    ```typescript
-   import Whop from '@whop/sdk';
+   import { WhopAPI } from '@whop/api';
    
-   const client = new Whop({
+   const client = new WhopAPI({
      appID: 'app_xxxxxxxxxxxxxx',
      apiKey: process.env.WHOP_API_KEY,
    });
@@ -298,9 +300,9 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -344,7 +346,7 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 - **Official Documentation**: https://docs.whop.com/
 - **REST API Docs**: https://docs.whop.com/apps/api/getting-started
 - **App Development**: https://docs.whop.com/apps
-- **SDK Package**: `@whop/sdk` (npm)
+- **SDK Package**: `@whop/api` (npm)
 
 ## Common API Examples
 
@@ -421,7 +423,7 @@ for await (const exp of experiences) {
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/sdk`) for app development
+1. **Always use the public REST API** (`@whop/api`) for app development
 2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
@@ -436,7 +438,7 @@ for await (const exp of experiences) {
 
 ### API Usage
 - The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/sdk` (REST API)
+- When building Whop apps, ONLY use `@whop/api` (REST API)
 - **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
 - **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
 
@@ -455,9 +457,9 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
   apiKey: process.env.WHOP_API_KEY, // Your API key
 });
@@ -609,10 +611,10 @@ Creators can paywall:
 
 ### Current API: REST API (Recommended)
 
-**Package**: `@whop/sdk`  
+**Package**: `@whop/api`  
 **Documentation**: https://docs.whop.com/apps/api/getting-started
 
-This is the **current, supported API** for building Whop apps.
+This is the **recommended API package** for building Whop apps with full functionality.
 
 #### Capabilities:
 - **App Configuration** - Set up URLs, permissions, settings
@@ -637,17 +639,19 @@ This is the **current, supported API** for building Whop apps.
 - **Authorized Users** - Manage admins and team members
 - **Users** - User profiles, data, and settings
 
+### Alternative SDK (Limited Functionality)
+
+**Package**: `@whop/sdk`  
+**Status**: Newer but missing some functionality - use `@whop/api` instead
+
 ### Deprecated APIs (Legacy)
 
-**Package**: `@whop/api`  
-**Status**: Deprecated - Do not use for new development
-
-Includes older API versions:
+The following are truly deprecated:
 - **GraphQL SDK** - Original GraphQL-based API
 - **v2** - Second iteration
 - **v5** - Third iteration
 
-These are maintained for backward compatibility but should not be used in new projects.
+These are maintained for backward compatibility only.
 
 ### Internal Frontend API (Not Public)
 
@@ -657,7 +661,7 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 - Company management internals
 - Direct database operations
 
-**For app development, always use the public REST API (`@whop/sdk`).**
+**For app development, always use the public REST API (`@whop/api`).**
 
 ## Development Workflow
 
@@ -665,9 +669,9 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 1. **Create the app** under your company
    ```typescript
-   import Whop from '@whop/sdk';
+   import { WhopAPI } from '@whop/api';
    
-   const client = new Whop({
+   const client = new WhopAPI({
      appID: 'app_xxxxxxxxxxxxxx',
      apiKey: process.env.WHOP_API_KEY,
    });
@@ -768,9 +772,9 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',
   apiKey: process.env.WHOP_API_KEY,
 });
@@ -814,7 +818,7 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 - **Official Documentation**: https://docs.whop.com/
 - **REST API Docs**: https://docs.whop.com/apps/api/getting-started
 - **App Development**: https://docs.whop.com/apps
-- **SDK Package**: `@whop/sdk` (npm)
+- **SDK Package**: `@whop/api` (npm)
 
 ## Common API Examples
 
@@ -891,7 +895,7 @@ for await (const exp of experiences) {
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/sdk`) for app development
+1. **Always use the public REST API** (`@whop/api`) for app development
 2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
@@ -906,7 +910,7 @@ for await (const exp of experiences) {
 
 ### API Usage
 - The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/sdk` (REST API)
+- When building Whop apps, ONLY use `@whop/api` (REST API)
 - **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
 - **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
 
@@ -925,9 +929,9 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import Whop from '@whop/sdk';
+import { WhopAPI } from '@whop/api';
 
-const client = new Whop({
+const client = new WhopAPI({
   appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
   apiKey: process.env.WHOP_API_KEY, // Your API key
 });
