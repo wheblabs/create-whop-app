@@ -354,6 +354,8 @@ async function main() {
 		app = await whop.apps.create({
 			name: randomName,
 			companyId: createCompany,
+			baseUrl:
+				'https://create-whop-app-instructions.whoplabs.io/experiences/[experienceId]',
 		})
 
 		// Update with user's actual name
@@ -363,6 +365,68 @@ async function main() {
 
 		setupSpinner.text = 'Installing app...'
 		await whop.companies.installApp(installCompanyId, app.id)
+
+		// Update app's checkout link with the app name
+		const { accessPasses } = await whop.companies.listAccessPasses(
+			createCompany,
+			{ accessPassTypes: ['app'] },
+		)
+		const appAccessPass = accessPasses.find((a) => a.title === randomName)
+		if (!appAccessPass) throw new Error('No app access pass found')
+		const { plans } = await whop.companies.listAccessPassPlans(
+			createCompany,
+			appAccessPass.id,
+		)
+		const appPlan = plans[0]
+		if (!appPlan) throw new Error('No app plan found')
+
+		await whop.companies.updatePlan({
+			id: appPlan.id,
+			title: name.trim(),
+
+			visibility: 'hidden',
+		})
+
+		await whop.companies.updateAccessPass({
+			id: appAccessPass.id,
+			title: name.trim(),
+			visibility: 'hidden',
+		})
+
+		await whop.companies.listAccessPassPlans(createCompany, appAccessPass.id)
+
+		// Setup access passes for whop payments
+		const timestamp = Date.now().toString(36)
+		const [oneTimePass, subscriptionPass] = await Promise.all([
+			whop.companies.createAccessPass({
+				companyId: createCompany,
+				title: 'Test one time payment',
+				description: 'One time payment for the app',
+				route: `one-time-payment-${timestamp}`,
+				planOptions: {
+					planType: 'one_time',
+					initialPrice: 1,
+					baseCurrency: 'usd',
+					visibility: 'hidden',
+				},
+				visibility: 'hidden',
+			}),
+
+			whop.companies.createAccessPass({
+				companyId: createCompany,
+				title: 'Test subscription',
+				description: 'Subscription for the app',
+				route: `subscription-${timestamp}`,
+				planOptions: {
+					planType: 'renewal',
+					baseCurrency: 'usd',
+					renewalPrice: 1,
+					billingPeriod: 30,
+					visibility: 'hidden',
+				},
+				visibility: 'hidden',
+			}),
+		])
 
 		// Step 8: Create project directory
 		mkdirSync(dest, { recursive: true })
@@ -397,6 +461,9 @@ async function main() {
 			`NEXT_PUBLIC_WHOP_APP_ID=${credentials.id}`,
 			`NEXT_PUBLIC_WHOP_AGENT_USER_ID=${credentials.agentUsers[0]?.id || ''}`,
 			`NEXT_PUBLIC_WHOP_COMPANY_ID=${createCompany}`,
+			``,
+			`ONE_TIME_PURCHASE_PLAN_ID=${oneTimePass.defaultPlan?.id}`,
+			`SUBSCRIPTION_PLAN_ID=${subscriptionPass.defaultPlan?.id}`,
 		].join('\n')
 
 		const envFilePath = join(dest, '.env')
@@ -406,7 +473,7 @@ async function main() {
 		setupSpinner.clear()
 
 		// Show all completed steps
-		console.log(chalk.green('✔') + ' Setting up project...')
+		console.log(`${chalk.green('✔')} Setting up project...`)
 		console.log(chalk.dim(`  ├─ Created app "${name.trim()}"`))
 		console.log(chalk.dim(`  ├─ Installed on ${installCompanyData?.title}`))
 		console.log(chalk.dim('  ├─ Template copied'))
@@ -418,7 +485,7 @@ async function main() {
 	}
 
 	// Get app URL
-	const appUrl = await whop.apps.getUrl(app.id, createCompany)
+	const appUrl = await whop.apps.getUrl(app.id, installCompanyId)
 
 	console.log('')
 	console.log(chalk.hex(ORANGE).bold('✓ Setup Complete!'))
