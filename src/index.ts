@@ -40,11 +40,13 @@ function getInstallCommand(pm: string): string {
 }
 
 async function copyTemplate(templateDir: string, dest: string): Promise<void> {
-	// Use shell cp -r to copy
+	// Use shell cp -r to copy all files including hidden ones
 	execSync(`cp -r "${templateDir}"/* "${dest}"`, { stdio: 'ignore' })
 
-	// Copy specific dotfiles explicitly
-	const dotfiles = ['.gitignore', '.prettierrc', '.env.example']
+	// Copy dotfiles and dot-directories explicitly (cp /* doesn't match hidden files)
+	const dotfiles = ['.gitignore', '.prettierrc']
+	const dotdirs = ['.cursor']
+
 	for (const dotfile of dotfiles) {
 		const srcPath = join(templateDir, dotfile)
 		const destPath = join(dest, dotfile)
@@ -52,6 +54,16 @@ async function copyTemplate(templateDir: string, dest: string): Promise<void> {
 			execSync(`cp "${srcPath}" "${destPath}"`, { stdio: 'ignore' })
 		} catch {
 			// File doesn't exist in template, skip it
+		}
+	}
+
+	for (const dotdir of dotdirs) {
+		const srcPath = join(templateDir, dotdir)
+		const destPath = join(dest, dotdir)
+		try {
+			execSync(`cp -r "${srcPath}" "${destPath}"`, { stdio: 'ignore' })
+		} catch {
+			// Directory doesn't exist in template, skip it
 		}
 	}
 }

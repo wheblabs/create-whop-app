@@ -22,6 +22,79 @@ alwaysApply: true
 - ❌ Internal GraphQL API (not public, unsupported)
 - ❌ CamelCase property names in REST API calls
 
+## Common Patterns: Getting IDs from Context
+
+### Getting Experience ID from the URL Path
+
+In Whop apps, the experience ID is typically available in the URL path:
+
+```typescript
+// Next.js App Router - from params
+export default function ExperiencePage({ params }: { params: { experienceId: string } }) {
+  const experienceId = params.experienceId; // e.g., "exp_xxxxxxxxxxxxxx"
+  // ...
+}
+
+// Next.js Pages Router - from router
+import { useRouter } from 'next/router';
+
+function ExperiencePage() {
+  const router = useRouter();
+  const experienceId = router.query.experienceId as string;
+  // ...
+}
+```
+
+### Getting Company ID from Experience ID
+
+Once you have the experience ID, you can fetch the experience to get the company ID:
+
+```typescript
+import Whop from '@whop/sdk';
+
+const client = new Whop({
+  appID: 'app_xxxxxxxxxxxxxx',
+  apiKey: process.env.WHOP_API_KEY,
+});
+
+// Retrieve the experience
+const experience = await client.experiences.retrieve(experienceId);
+
+// Get the company ID from the experience
+const companyId = experience.company.id; // e.g., "biz_xxxxxxxxxxxxxx"
+
+// Now you can use the company ID for other operations
+const members = await client.members.list({
+  company_id: companyId
+});
+```
+
+**Experience Object Structure:**
+```typescript
+{
+  id: "exp_xxxxxxxxxxxxxx",
+  name: "My App Instance",
+  order: "123.45",
+  created_at: "2023-12-01T05:00:00.401Z",
+  app: {
+    id: "app_xxxxxxxxxxxxxx",
+    name: "My App"
+  },
+  company: {
+    id: "biz_xxxxxxxxxxxxxx",  // <- This is the company ID
+    title: "My Community",
+    route: "my-community"
+  },
+  products: [
+    {
+      id: "prod_xxxxxxxxxxxxx",
+      route: "premium-access",
+      title: "Premium Access"
+    }
+  ]
+}
+```
+
 ## What the REST API Can Do
 
 ### ✅ Supported Operations
@@ -204,6 +277,118 @@ client.chatChannels
 client.supportChannels
 client.reactions
 client.courseLessonInteractions
+```
+
+## Common API Endpoints: Detailed Parameters
+
+### `client.members.list(params)`
+
+List members of a company.
+
+**Required Parameters:**
+- `company_id` (string) - The ID of the company to list members for (e.g., `"biz_xxxxxxxxxxxxxx"`)
+
+**Optional Parameters:**
+- `after` (string | null) - Cursor for forward pagination
+- `before` (string | null) - Cursor for backward pagination
+- `first` (integer | null) - Number of elements to return (forward pagination)
+- `last` (integer | null) - Number of elements to return (backward pagination)
+- `direction` (enum | null) - Sort direction: `"asc"` or `"desc"`
+- `order` (enum | null) - Sort by: `"id"`, `"usd_total_spent"`, `"created_at"`, `"joined_at"`, or `"most_recent_action"`
+- `created_before` (string<date-time> | null) - Maximum creation date filter (e.g., `"2023-12-01T05:00:00.401Z"`)
+- `created_after` (string<date-time> | null) - Minimum creation date filter
+- `access_level` (enum | null) - Filter by access level: `"no_access"`, `"admin"`, or `"customer"`
+- `access_pass_ids` (string[] | null) - Filter by access pass IDs
+- `plan_ids` (string[] | null) - Filter by plan IDs
+- `statuses` (enum<string>[] | null) - Filter by member statuses
+- `promo_code_ids` (string[] | null) - Filter by promo code IDs
+- `most_recent_actions` (enum<string>[] | null) - Filter by most recent actions
+- `query` (string | null) - Search by name, username, or email (email requires `member:email:read` permission)
+
+**Example:**
+```typescript
+// List all members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx" 
+})) {
+  console.log(member.user.username, member.access_level);
+}
+
+// List only admin members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx",
+  access_level: "admin"
+})) {
+  console.log(member.user.username);
+}
+
+// Search for specific members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx",
+  query: "john@example.com"
+})) {
+  console.log(member.user.email);
+}
+```
+
+**Response:** Returns a paginated list of member objects with automatic pagination via async iterator.
+
+**Required Permissions:**
+- `member:basic:read`
+- `member:email:read` (for email in response)
+- `member:phone:read` (for phone in response)
+
+---
+
+### `client.experiences.retrieve(id)`
+
+Retrieve a specific experience by ID.
+
+**Required Parameters:**
+- `id` (string) - The experience ID (e.g., `"exp_xxxxxxxxxxxxxx"`)
+
+**Example:**
+```typescript
+const experience = await client.experiences.retrieve("exp_xxxxxxxxxxxxxx");
+
+console.log(experience.name); // App instance name
+console.log(experience.company.id); // Company ID: "biz_xxxxxxxxxxxxxx"
+console.log(experience.company.title); // Company name
+console.log(experience.app.id); // App ID
+```
+
+**Response Structure:**
+```typescript
+{
+  id: string;                    // "exp_xxxxxxxxxxxxxx"
+  name: string;                  // Display name of the experience
+  order: string | null;          // Sort order (e.g., "123.45")
+  created_at: string;            // ISO 8601 timestamp
+  app: {
+    id: string;                  // "app_xxxxxxxxxxxxxx"
+    name: string;                // App name
+  };
+  company: {
+    id: string;                  // "biz_xxxxxxxxxxxxxx" <- Use this for company_id
+    title: string;               // Company display name
+    route: string;               // Company URL route
+  };
+  products: Array<{
+    id: string;                  // "prod_xxxxxxxxxxxxx"
+    route: string;               // Product URL route
+    title: string;               // Product title
+  }>;
+}
+```
+
+**Common Use Case - Get Company ID:**
+```typescript
+// From experience ID, get company ID
+const experience = await client.experiences.retrieve(experienceId);
+const companyId = experience.company.id;
+
+// Now use company ID for other operations
+const members = await client.members.list({ company_id: companyId });
 ```
 
 ## Common Mistakes to Avoid
@@ -538,6 +723,118 @@ client.chatChannels
 client.supportChannels
 client.reactions
 client.courseLessonInteractions
+```
+
+## Common API Endpoints: Detailed Parameters
+
+### `client.members.list(params)`
+
+List members of a company.
+
+**Required Parameters:**
+- `company_id` (string) - The ID of the company to list members for (e.g., `"biz_xxxxxxxxxxxxxx"`)
+
+**Optional Parameters:**
+- `after` (string | null) - Cursor for forward pagination
+- `before` (string | null) - Cursor for backward pagination
+- `first` (integer | null) - Number of elements to return (forward pagination)
+- `last` (integer | null) - Number of elements to return (backward pagination)
+- `direction` (enum | null) - Sort direction: `"asc"` or `"desc"`
+- `order` (enum | null) - Sort by: `"id"`, `"usd_total_spent"`, `"created_at"`, `"joined_at"`, or `"most_recent_action"`
+- `created_before` (string<date-time> | null) - Maximum creation date filter (e.g., `"2023-12-01T05:00:00.401Z"`)
+- `created_after` (string<date-time> | null) - Minimum creation date filter
+- `access_level` (enum | null) - Filter by access level: `"no_access"`, `"admin"`, or `"customer"`
+- `access_pass_ids` (string[] | null) - Filter by access pass IDs
+- `plan_ids` (string[] | null) - Filter by plan IDs
+- `statuses` (enum<string>[] | null) - Filter by member statuses
+- `promo_code_ids` (string[] | null) - Filter by promo code IDs
+- `most_recent_actions` (enum<string>[] | null) - Filter by most recent actions
+- `query` (string | null) - Search by name, username, or email (email requires `member:email:read` permission)
+
+**Example:**
+```typescript
+// List all members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx" 
+})) {
+  console.log(member.user.username, member.access_level);
+}
+
+// List only admin members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx",
+  access_level: "admin"
+})) {
+  console.log(member.user.username);
+}
+
+// Search for specific members
+for await (const member of client.members.list({ 
+  company_id: "biz_xxxxxxxxxxxxxx",
+  query: "john@example.com"
+})) {
+  console.log(member.user.email);
+}
+```
+
+**Response:** Returns a paginated list of member objects with automatic pagination via async iterator.
+
+**Required Permissions:**
+- `member:basic:read`
+- `member:email:read` (for email in response)
+- `member:phone:read` (for phone in response)
+
+---
+
+### `client.experiences.retrieve(id)`
+
+Retrieve a specific experience by ID.
+
+**Required Parameters:**
+- `id` (string) - The experience ID (e.g., `"exp_xxxxxxxxxxxxxx"`)
+
+**Example:**
+```typescript
+const experience = await client.experiences.retrieve("exp_xxxxxxxxxxxxxx");
+
+console.log(experience.name); // App instance name
+console.log(experience.company.id); // Company ID: "biz_xxxxxxxxxxxxxx"
+console.log(experience.company.title); // Company name
+console.log(experience.app.id); // App ID
+```
+
+**Response Structure:**
+```typescript
+{
+  id: string;                    // "exp_xxxxxxxxxxxxxx"
+  name: string;                  // Display name of the experience
+  order: string | null;          // Sort order (e.g., "123.45")
+  created_at: string;            // ISO 8601 timestamp
+  app: {
+    id: string;                  // "app_xxxxxxxxxxxxxx"
+    name: string;                // App name
+  };
+  company: {
+    id: string;                  // "biz_xxxxxxxxxxxxxx" <- Use this for company_id
+    title: string;               // Company display name
+    route: string;               // Company URL route
+  };
+  products: Array<{
+    id: string;                  // "prod_xxxxxxxxxxxxx"
+    route: string;               // Product URL route
+    title: string;               // Product title
+  }>;
+}
+```
+
+**Common Use Case - Get Company ID:**
+```typescript
+// From experience ID, get company ID
+const experience = await client.experiences.retrieve(experienceId);
+const companyId = experience.company.id;
+
+// Now use company ID for other operations
+const members = await client.members.list({ company_id: companyId });
 ```
 
 ## Common Mistakes to Avoid
