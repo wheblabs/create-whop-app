@@ -45,7 +45,7 @@ async function copyTemplate(templateDir: string, dest: string): Promise<void> {
 
 	// Copy dotfiles and dot-directories explicitly (cp /* doesn't match hidden files)
 	const dotfiles = ['.gitignore', '.prettierrc']
-	const dotdirs = ['.cursor']
+	const dotdirs = ['.cursor', '.vscode']
 
 	for (const dotfile of dotfiles) {
 		const srcPath = join(templateDir, dotfile)
@@ -77,10 +77,7 @@ interface AddonConfig {
 	scripts?: Record<string, string>
 }
 
-async function applyAddon(
-	addonPath: string,
-	dest: string,
-): Promise<AddonConfig> {
+async function applyAddon(addonPath: string, dest: string): Promise<AddonConfig> {
 	// Read addon config
 	const configPath = join(addonPath, '.addon.json')
 	const config: AddonConfig = JSON.parse(readFileSync(configPath, 'utf-8'))
@@ -186,9 +183,7 @@ async function main() {
 
 		// Clear line and show completion
 		process.stdout.write('\x1b[1A\x1b[2K')
-		console.log(
-			`${chalk.green('✔')} ${chalk.dim('(1/4) Create app:')} ${chalk.dim(name)}`,
-		)
+		console.log(`${chalk.green('✔')} ${chalk.dim('(1/4) Create app:')} ${chalk.dim(name)}`)
 	}
 
 	if (!name?.trim()) {
@@ -203,11 +198,7 @@ async function main() {
 	const dest = resolve(process.cwd(), dirName)
 	if (lstatSync(dest, { throwIfNoEntry: false })) {
 		console.error(chalk.red(`\nDirectory already exists: ${dirName}`))
-		console.log(
-			chalk.dim(
-				'Please choose a different name or remove the existing directory.\n',
-			),
-		)
+		console.log(chalk.dim('Please choose a different name or remove the existing directory.\n'))
 		process.exit(1)
 	}
 
@@ -231,9 +222,7 @@ async function main() {
 	if (companies.length === 0) {
 		console.log('')
 		console.log(chalk.hex(ORANGE)('No companies found'))
-		console.log(
-			chalk.dim('You need to create a company before you can create an app.'),
-		)
+		console.log(chalk.dim('You need to create a company before you can create an app.'))
 		console.log('')
 
 		const { companyName } = await prompt<{ companyName: string }>({
@@ -241,8 +230,7 @@ async function main() {
 			name: 'companyName',
 			message: chalk.hex(ORANGE)('Enter a name for your new company:'),
 			prefix: chalk.hex(ORANGE)('?'),
-			validate: (value: string) =>
-				value.trim().length > 0 || 'Company name is required',
+			validate: (value: string) => value.trim().length > 0 || 'Company name is required',
 		})
 
 		// Clear line and show completion
@@ -336,10 +324,13 @@ async function main() {
 			name: 'dbType',
 			message: chalk.hex(ORANGE)('Select database:'),
 			prefix: chalk.hex(ORANGE)('?'),
-			choices: [{ name: 'sqlite', message: 'SQLite (upgradable to Turso)' }],
+			choices: [
+				{ name: 'sqlite', message: 'SQLite (simple local database)' },
+				{ name: 'supabase', message: 'Supabase (PostgreSQL + Auth + Storage)' },
+			],
 		})
 		databaseType = dbType
-		databaseDisplay = 'SQLite / Turso'
+		databaseDisplay = dbType === 'sqlite' ? 'SQLite / Turso' : 'Supabase (PostgreSQL)'
 
 		// Clear the database selection line
 		process.stdout.write('\x1b[1A\x1b[2K')
@@ -348,9 +339,7 @@ async function main() {
 		process.stdout.write('\x1b[1A\x1b[2K')
 	}
 
-	console.log(
-		`${chalk.green('✔')} ${chalk.dim('(4/4) Database:')} ${chalk.dim(databaseDisplay)}`,
-	)
+	console.log(`${chalk.green('✔')} ${chalk.dim('(4/4) Database:')} ${chalk.dim(databaseDisplay)}`)
 	console.log('')
 
 	// Step 7: Setting up project (grouped)
@@ -366,8 +355,7 @@ async function main() {
 		app = await whop.apps.create({
 			name: randomName,
 			companyId: createCompany,
-			baseUrl:
-				'https://create-whop-app-instructions.whoplabs.io/experiences/[experienceId]',
+			baseUrl: 'https://create-whop-app-instructions.whoplabs.io/experiences/[experienceId]',
 		})
 
 		// Update with user's actual name
@@ -379,16 +367,12 @@ async function main() {
 		await whop.companies.installApp(installCompanyId, app.id)
 
 		// Update app's checkout link with the app name
-		const { accessPasses } = await whop.companies.listAccessPasses(
-			createCompany,
-			{ accessPassTypes: ['app'] },
-		)
+		const { accessPasses } = await whop.companies.listAccessPasses(createCompany, {
+			accessPassTypes: ['app'],
+		})
 		const appAccessPass = accessPasses.find((a) => a.title === randomName)
 		if (!appAccessPass) throw new Error('No app access pass found')
-		const { plans } = await whop.companies.listAccessPassPlans(
-			createCompany,
-			appAccessPass.id,
-		)
+		const { plans } = await whop.companies.listAccessPassPlans(createCompany, appAccessPass.id)
 		const appPlan = plans[0]
 		if (!appPlan) throw new Error('No app plan found')
 
@@ -451,13 +435,7 @@ async function main() {
 		// Add database connector if selected
 		if (needsDatabase === 'yes' && databaseType) {
 			setupSpinner.text = 'Setting up database...'
-			const addonPath = join(
-				__dirname,
-				'..',
-				'templates',
-				'addons',
-				databaseType,
-			)
+			const addonPath = join(__dirname, '..', 'templates', 'addons', databaseType)
 			await applyAddon(addonPath, dest)
 		}
 
@@ -474,12 +452,29 @@ async function main() {
 			`NEXT_PUBLIC_WHOP_AGENT_USER_ID=${credentials.agentUsers[0]?.id || ''}`,
 			`NEXT_PUBLIC_WHOP_COMPANY_ID=${createCompany}`,
 			``,
-			`ONE_TIME_PURCHASE_PLAN_ID=${oneTimePass.defaultPlan?.id}`,
-			`SUBSCRIPTION_PLAN_ID=${subscriptionPass.defaultPlan?.id}`,
+			`ONE_TIME_PURCHASE_ACCESS_PASS_PLAN_ID=${oneTimePass.defaultPlan?.id}`,
+			`ONE_TIME_PURCHASE_ACCESS_PASS_ID=${oneTimePass.id}`,
+			`SUBSCRIPTION_PURCHASE_ACCESS_PASS_PLAN_ID=${subscriptionPass.defaultPlan?.id}`,
+			`SUBSCRIPTION_PURCHASE_ACCESS_PASS_ID=${subscriptionPass.id}`,
 		].join('\n')
 
+		let finalEnvContent = envContent
+
+		// Add Supabase configuration if selected
+		if (databaseType === 'supabase') {
+			finalEnvContent += `\n\n# Supabase Configuration
+# 1. Create project: https://app.supabase.com
+# 2. Get credentials: Project Settings > API
+# 3. Get DATABASE_URL: Project Settings > Database > Connection String (URI)
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@[YOUR-PROJECT-REF].supabase.co:5432/postgres
+NEXT_PUBLIC_SUPABASE_URL=https://[YOUR-PROJECT-REF].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+`
+		}
+
 		const envFilePath = join(dest, '.env')
-		writeFileSync(envFilePath, envContent)
+		writeFileSync(envFilePath, finalEnvContent)
 
 		setupSpinner.stop()
 		setupSpinner.clear()
@@ -506,6 +501,14 @@ async function main() {
 	console.log(chalk.hex(ORANGE)(`Company: ${createCompanyData.title}`))
 	console.log(chalk.hex(ORANGE)(`URL: ${appUrl}`))
 	console.log('')
+
+	// Show Supabase setup instructions if selected
+	if (databaseType === 'supabase') {
+		console.log(
+			chalk.yellow('ℹ Supabase requires additional setup. See README.md for instructions.'),
+		)
+		console.log('')
+	}
 
 	// Step 12: Ask to open in browser
 	const { openBrowser } = await prompt<{ openBrowser: boolean }>({
@@ -545,8 +548,7 @@ async function main() {
 	}
 
 	// Use the same package manager to run dev
-	const runCmd =
-		packageManager === 'npm' ? 'npm run dev' : `${packageManager} dev`
+	const runCmd = packageManager === 'npm' ? 'npm run dev' : `${packageManager} dev`
 	const cmdParts = runCmd.split(' ')
 	const command = cmdParts[0] || 'npm'
 	const args = cmdParts.slice(1)

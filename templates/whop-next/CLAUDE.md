@@ -120,17 +120,19 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 **Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/api` package (complete REST API implementation)
-- Snake_case property names (`company_id`, `base_url`, `product_id`)
+- `@whop/api` package with `WhopServerSdk`
+- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
+- Optional chaining (`?.`) for nested API responses
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
 - ⚠️ `@whop/sdk` package (newer but missing some functionality)
+- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
 - ❌ Internal GraphQL API (not public, unsupported)
-- ❌ CamelCase property names in REST API calls
+- ❌ Positional arguments (use object parameters)
 
 ## What the REST API Can Do
 
@@ -258,11 +260,13 @@ mcp_exa_get_code_context_exa({
 
 ### Client Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
@@ -431,17 +435,40 @@ await client.apps.update(app.id, {
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
+## Security Best Practices
+
+### 🔒 Critical: Always Filter User Data
+
+**❌ NEVER return all company data:**
+```typescript
+// DANGEROUS - Returns ALL users' receipts!
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+return NextResponse.json(receipts?.receipts?.nodes);
+```
+
+**✅ ALWAYS filter to current user:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+// SAFE - Only returns current user's receipts
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return NextResponse.json(userReceipts);
+```
+
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/api` - it contains full functionality
-2. **ALWAYS** use `snake_case` for REST API property names
-3. **CHECK** official docs first: https://docs.whop.com/
-4. **USE** Exa MCP when docs are insufficient or unclear
-5. **REMEMBER** the terminology mappings (Product = Access Pass, Plan = Checkout Link)
-6. **VALIDATE** routes: lowercase, alphanumeric, hyphens only, 2-100 chars
-7. **HANDLE** errors properly with try/catch
-8. **LEVERAGE** async iterators for pagination
-9. **TEST** thoroughly before deploying
+1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
+2. **USE** object parameters with camelCase - `{ companyId }`, `{ experienceId }`
+3. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected routes
+4. **FILTER** company-wide data to current user only - NEVER return all data
+5. **USE** `?.` optional chaining for nested API responses
+6. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
+7. **CHECK** official docs first: https://docs.whop.com/
+8. **TEST** thoroughly before deploying
 
 When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
 
@@ -454,17 +481,19 @@ When in doubt, consult the official documentation or use Exa MCP to find real-wo
 **Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
 
 ### DO Use
-- `@whop/api` package (complete REST API implementation)
-- Snake_case property names (`company_id`, `base_url`, `product_id`)
+- `@whop/api` package with `WhopServerSdk`
+- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
+- Optional chaining (`?.`) for nested API responses
 - Official documentation at https://docs.whop.com/
 
 ### DO NOT Use
 - ⚠️ `@whop/sdk` package (newer but missing some functionality)
+- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
 - ❌ GraphQL SDK (deprecated)
 - ❌ API v2 (deprecated)
 - ❌ API v5 (deprecated)
 - ❌ Internal GraphQL API (not public, unsupported)
-- ❌ CamelCase property names in REST API calls
+- ❌ Positional arguments (use object parameters)
 
 ## What the REST API Can Do
 
@@ -592,11 +621,13 @@ mcp_exa_get_code_context_exa({
 
 ### Client Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
@@ -765,17 +796,40 @@ await client.apps.update(app.id, {
 - **Getting Started**: https://docs.whop.com/apps/api/getting-started
 - **Permissions Guide**: https://docs.whop.com/apps/api/permissions
 
+## Security Best Practices
+
+### 🔒 Critical: Always Filter User Data
+
+**❌ NEVER return all company data:**
+```typescript
+// DANGEROUS - Returns ALL users' receipts!
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+return NextResponse.json(receipts?.receipts?.nodes);
+```
+
+**✅ ALWAYS filter to current user:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+// SAFE - Only returns current user's receipts
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return NextResponse.json(userReceipts);
+```
+
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `@whop/api` - it contains full functionality
-2. **ALWAYS** use `snake_case` for REST API property names
-3. **CHECK** official docs first: https://docs.whop.com/
-4. **USE** Exa MCP when docs are insufficient or unclear
-5. **REMEMBER** the terminology mappings (Product = Access Pass, Plan = Checkout Link)
-6. **VALIDATE** routes: lowercase, alphanumeric, hyphens only, 2-100 chars
-7. **HANDLE** errors properly with try/catch
-8. **LEVERAGE** async iterators for pagination
-9. **TEST** thoroughly before deploying
+1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
+2. **USE** object parameters with camelCase - `{ companyId }`, `{ experienceId }`
+3. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected routes
+4. **FILTER** company-wide data to current user only - NEVER return all data
+5. **USE** `?.` optional chaining for nested API responses
+6. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
+7. **CHECK** official docs first: https://docs.whop.com/
+8. **TEST** thoroughly before deploying
 
 When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
 

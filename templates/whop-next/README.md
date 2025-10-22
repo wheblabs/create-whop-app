@@ -1,144 +1,215 @@
 # Whop App
 
-This is a Whop app created with [`create-whop-app`](https://github.com/whopio/create-whop-app), built on Next.js and optimized for Bun.
+A Next.js application for building apps on the Whop platform.
 
-## 🚀 Getting Started
+## Prerequisites
 
-Your app is ready to run! If the CLI already started your dev server, you can access it at [http://localhost:3000](http://localhost:3000).
+- [Bun](https://bun.sh) v1.0 or later
+- A Whop account with a company
 
-If you need to start it manually:
+## Quick Start
+
+Install dependencies:
+
+```bash
+bun install
+```
+
+Start the development server:
 
 ```bash
 bun dev
 ```
 
-## 📁 Project Structure
+Your app will be available at the URL provided during setup.
+
+## Database Setup
+
+### SQLite
+
+If you selected SQLite, your database is ready to use. A `sqlite.db` file will be created automatically in your project root on first run.
+
+The database client is available at `src/db/index.ts`:
+
+```typescript
+import { db } from './db'
+import { tasks } from './db/schema'
+
+// Example query
+const allTasks = await db.select().from(tasks)
+```
+
+### Supabase
+
+If you selected Supabase, follow these steps to complete the setup:
+
+#### 1. Create a Supabase Project
+
+1. Go to [app.supabase.com](https://app.supabase.com)
+2. Click "New Project"
+3. Choose your organization and set a database password
+4. Wait for the project to be created
+
+#### 2. Get Your Credentials
+
+**API Credentials** (Project Settings > API):
+- `NEXT_PUBLIC_SUPABASE_URL` - Your project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your anon/public key
+- `SUPABASE_SERVICE_ROLE_KEY` - Your service role key (keep this secret!)
+
+**Database Connection** (Project Settings > Database):
+- Scroll to "Connection String"
+- Select "URI" tab
+- Copy the connection string
+- Replace `[YOUR-PASSWORD]` with your database password
+- Set this as `DATABASE_URL`
+
+#### 3. Update Your .env File
+
+Replace the placeholder values in your `.env` file with the credentials from step 2.
+
+#### 4. Push Your Schema
+
+Run this command to create the initial database schema:
+
+```bash
+bun db:push
+```
+
+#### 5. Use the Database
+
+You now have two clients available:
+
+**Drizzle Client** (type-safe queries):
+```typescript
+import { db } from './db'
+import { tasks } from './db/schema'
+
+const allTasks = await db.select().from(tasks)
+```
+
+**Supabase Client** (auth, storage, realtime):
+```typescript
+import { supabase } from './db'
+
+// Authentication
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password'
+})
+
+// Storage
+const { data, error } = await supabase.storage
+  .from('bucket')
+  .upload('file.png', file)
+
+// Realtime
+const channel = supabase.channel('room-1')
+  .on('broadcast', { event: 'test' }, (payload) => {
+    console.log(payload)
+  })
+  .subscribe()
+```
+
+## Available Scripts
+
+### Development
+
+- `bun dev` - Start the development server
+- `bun build` - Build for production
+- `bun start` - Start the production server
+
+### Database Scripts (if database is enabled)
+
+- `bun db:generate` - Generate migration files from your schema
+- `bun db:push` - Push your schema directly to the database (no migration files)
+- `bun db:migrate` - Run pending migrations
+- `bun db:studio` - Open Drizzle Studio (visual database browser)
+
+## Project Structure
 
 ```
 ├── src/
-│   ├── app/
-│   │   ├── (whop-api)/          # Whop API routes
+│   ├── app/                    # Next.js app directory
+│   │   ├── (whop-api)/        # Whop API routes
 │   │   │   └── api/
 │   │   │       └── experience/
-│   │   ├── experiences/          # Your app pages
-│   │   │   └── [experienceId]/
-│   │   └── globals.css
-│   ├── components/
-│   │   └── whop-context/         # Whop SDK context & hooks
-│   ├── lib/
-│   │   └── whop.ts               # Whop SDK client setup
-│   └── env.ts                    # Environment validation
-├── .env                          # Your environment variables
-└── package.json
+│   │   └── experiences/       # Your app's pages
+│   ├── components/            # React components
+│   │   └── whop-context/     # Whop SDK context and hooks
+│   ├── db/                    # Database (if enabled)
+│   │   ├── index.ts          # Database clients
+│   │   └── schema.ts         # Database schema
+│   ├── lib/                   # Utility functions
+│   │   └── whop.ts           # Server-side Whop SDK
+│   └── env.ts                 # Environment variables validation
+├── .env                       # Environment variables
+└── next.config.ts             # Next.js configuration
 ```
 
-## 🔧 Setting Up Your Whop App in the Dashboard
+## Whop Integration
 
-Before your app can be installed and used, you need to configure it in the Whop dashboard:
+### Client-Side SDK
 
-### 1. Create or Access Your App
-
-1. Go to [Whop Developer Dashboard](https://whop.com/dashboard)
-2. Click "Developer" in the left sidebar (at the bottom)
-3. Create a new app or select your existing app
-
-![1759855227398](https://imagedelivery.net/jkJ-8epQpRzUjpjX1rR9jQ/4f654981-d4e7-4029-dc0f-83b2374ce900/public)
-
-### 2. Install your app
-
-1. In your app dashboard, find the **Installation Link** section
-2. Click on the installation button
-3. Select your whop community and click install. This will open the app as well.
-
-![1759855491970](https://imagedelivery.net/jkJ-8epQpRzUjpjX1rR9jQ/00cee47f-a12a-4f3a-86b4-7c4551dd8f00/public)
-![1759855625621](https://imagedelivery.net/jkJ-8epQpRzUjpjX1rR9jQ/4a3b8650-9af8-407f-c7f1-535a8cb62100/public)
-
-### 3. Configure your app to start developing
-
-1. Open your app after you installed it.
-2. Find the development badge in the corner of your app (Top right by default) and click it.
-3. Set the environment to "Local".
-
-![1759856246380](https://imagedelivery.net/jkJ-8epQpRzUjpjX1rR9jQ/d17d4d1b-e8fe-4dbc-98ea-e882eaa67400/public)
-
-## 🏗️ What's Included
-
-This template comes with:
-
-- **Whop SDK** (`@whop/sdk`) - Pre-configured client for Whop API
-- **Whop Context** - React hooks for accessing Whop data in your components
-- **Experience-based routing** - Pages that map to Whop experiences (installations)
-- **API routes** - Server-side endpoints for Whop integration
-- **Environment validation** - Type-safe environment variables with Zod
-- **Bun** - Fast runtime and package manager
-
-## 🛠️ Development
-
-### Environment Variables
-
-Your `.env` file should already be configured with:
-
-```env
-WHOP_API_KEY=your_api_key
-NEXT_PUBLIC_WHOP_APP_ID=your_app_id
-NEXT_PUBLIC_WHOP_AGENT_USER_ID=your_agent_user_id
-NEXT_PUBLIC_WHOP_COMPANY_ID=your_company_id
-```
-
-### Using the Whop SDK
-
-The Whop SDK is initialized in `src/lib/whop.ts` and available throughout your app:
-
-```typescript
-import { whopSdk } from '@/lib/whop'
-
-// Make API requests
-const user = await whopSdk.users.getUser({ userId: 'user_123' })
-```
-
-### Using Whop Context
-
-Access Whop data in your components using the Whop context:
+Use the Whop context in your React components:
 
 ```typescript
 'use client'
-import { useWhopUser } from '@/components/whop-context'
+import { useWhop } from '@/components/whop-context'
 
 export default function MyComponent() {
-  const { user } = useWhopUser()
-
-  return <div>Hello {user.username}!</div>
+  const whop = useWhop()
+  
+  // Access user data
+  const user = whop.user
+  
+  // Make API calls
+  const data = await whop.GET('/api/v5/me')
+  
+  return <div>Hello {user?.username}</div>
 }
 ```
 
-## 📚 Learn More
+### Server-Side SDK
 
-### Whop Resources
+Use the Whop client in API routes and server components:
 
-- [Whop Apps Documentation](https://docs.whop.com/apps) - Complete guide to building Whop apps
-- [Whop SDK Reference](https://docs.whop.com/sdk) - API reference for the Whop SDK
-- [Whop Tutorials](https://docs.whop.com/apps/tutorials) - Step-by-step tutorials
+```typescript
+import { whop } from '@/lib/whop'
 
-### Next.js Resources
+// In API route or server component
+const user = await whop.me()
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
-- [Next.js App Router](https://nextjs.org/docs/app) - Learn about the App Router
+## Environment Variables
 
-### Bun Resources
+Your `.env` file contains these variables:
 
-- [Bun Documentation](https://bun.sh/docs) - Learn about Bun's features
-- [Bun API Reference](https://bun.sh/docs/api) - Built-in APIs and utilities
+- `WHOP_API_KEY` - Your app's API key
+- `NEXT_PUBLIC_WHOP_APP_ID` - Your app's ID
+- `NEXT_PUBLIC_WHOP_AGENT_USER_ID` - Agent user ID for testing
+- `NEXT_PUBLIC_WHOP_COMPANY_ID` - Your company ID
+- `ONE_TIME_PURCHASE_ACCESS_PASS_PLAN_ID` - Test one-time payment plan
+- `ONE_TIME_PURCHASE_ACCESS_PASS_ID` - Test one-time payment access pass
+- `SUBSCRIPTION_PURCHASE_ACCESS_PASS_PLAN_ID` - Test subscription plan
+- `SUBSCRIPTION_PURCHASE_ACCESS_PASS_ID` - Test subscription access pass
 
-## 🚢 Deployment
+If you selected Supabase, you'll also have:
+- `DATABASE_URL` - PostgreSQL connection string
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 
-When you're ready to deploy:
+## Learn More
 
-1. Deploy your app to your preferred hosting platform (Vercel, Cloudflare, etc.)
-2. Update your `.env` variables in your hosting platform's environment settings
-3. Update your Whop app's **Base URL** in the dashboard to your production URL
+- [Whop Documentation](https://docs.whop.com)
+- [Whop SDK Reference](https://github.com/whopio/whop-sdk)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team)
+- [Supabase Documentation](https://supabase.com/docs) (if using Supabase)
 
-## 🤝 Support
+## Support
 
-- [Whop Labs](https://whop.com/whoplabs-main) - Get help directly from us
-- [Whop Discord](https://discord.gg/whop) - Get help from the Whop community
-- [Whop Support](https://whop.com/support) - Official Whop support
+For issues or questions:
+- Whop Discord: [discord.gg/whop](https://discord.gg/whop)
+- Whop Docs: [docs.whop.com](https://docs.whop.com)

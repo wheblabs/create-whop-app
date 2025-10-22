@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import Shared from '@whop/sdk'
-import { createContext, useContext } from 'react'
+import { createContext, useContext } from "react";
+import type { WhopAccess, WhopExperience, WhopUser } from "~/lib/whop";
 
 /**
  * The context for the Whop API
@@ -10,12 +10,12 @@ import { createContext, useContext } from 'react'
  * @property access - Whether the user has access to the experience
  */
 interface WhopContext {
-  experience: Shared.Experience
-  user: Shared.UserRetrieveResponse
-  access: Shared.UserCheckAccessResponse
+  experience: WhopExperience;
+  user: WhopUser;
+  access: WhopAccess;
 }
 
-export const WhopContext = createContext<WhopContext | null>(null)
+export const WhopContext = createContext<WhopContext | null>(null);
 
 /**
  * Hook to use the Whop context
@@ -31,7 +31,7 @@ export const WhopContext = createContext<WhopContext | null>(null)
  * )
  */
 export function useWhop(): WhopContext {
-  const context = useContext(WhopContext)
-  if (!context) throw new Error('useWhop must be used within a WhopProvider')
-  return context
+  const context = useContext(WhopContext);
+  if (!context) throw new Error("useWhop must be used within a WhopProvider");
+  return context;
 }

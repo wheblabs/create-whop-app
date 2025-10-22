@@ -195,92 +195,112 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 ### Creating a Whop App
 
-1. **Create the app** under your company
+1. **Initialize the SDK** in your lib/whop.ts
    ```typescript
-   import { WhopAPI } from '@whop/api';
+   import { WhopServerSdk } from '@whop/api';
+   import { env } from '~/env';
    
-   const client = new WhopAPI({
-     appID: 'app_xxxxxxxxxxxxxx',
-     apiKey: process.env.WHOP_API_KEY,
-   });
-   
-   const app = await client.apps.create({
-     name: "My App",
-     base_url: "https://myapp.com",
-     company_id: "biz_123"
+   export const whop = WhopServerSdk({
+     appId: env.NEXT_PUBLIC_WHOP_APP_ID,
+     appApiKey: env.WHOP_API_KEY,
+     onBehalfOfUserId: env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+     companyId: env.NEXT_PUBLIC_WHOP_COMPANY_ID,
    });
    ```
 
-2. **Configure app settings**
+2. **Create API routes** to interact with Whop
    ```typescript
-   await client.apps.update(app.id, {
-     base_url: "https://myapp.com",
-     base_dev_url: "http://localhost:3000",
-     base_preview_url: "https://staging.myapp.com",
-     description: "My app description",
-     icon: "attachment_id_here"
-   });
+   // app/(whop-api)/api/experience/[experienceId]/route.ts
+   import { NextRequest, NextResponse } from 'next/server';
+   import { whop } from '~/lib/whop';
+   
+   export async function GET(
+     req: NextRequest,
+     { params }: { params: Promise<{ experienceId: string }> }
+   ) {
+     const { experienceId } = await params;
+     const experience = await whop.experiences.getExperience({ experienceId });
+     return NextResponse.json(experience);
+   }
    ```
 
-3. **Submit for review**
-   - Apps must be reviewed before appearing in the App Store
-   - Once approved, other creators can install your app
+3. **Authenticate users** in protected routes
+   ```typescript
+   import { verifyUserToken } from '@whop/api';
+   
+   const { userId } = await verifyUserToken(req.headers);
+   if (!userId) {
+     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+   }
+   ```
 
-4. **Handle installations**
-   - When installed, your app receives an experience ID
-   - Use webhooks to track installations/uninstallations
-   - Configure experience-specific settings
+4. **Handle user data safely**
+   - Always verify authentication first
+   - Filter company-wide data to current user only
+   - Use optional chaining for nested properties
+   - Return minimal data to avoid privacy leaks
 
 ### Paywalling Your App
 
-1. **Create an access pass** for your app features
+1. **Create checkout endpoint** for your plans
    ```typescript
-   const product = await client.products.create({
-     title: "Premium Features",
-     company_id: "biz_123",
-     description: "Access to premium features",
-     visibility: "visible"
-   });
+   // app/(whop-api)/api/checkout/subscription/route.ts
+   import { verifyUserToken } from '@whop/api';
+   
+   export async function POST(req: NextRequest) {
+     const { userId } = await verifyUserToken(req.headers);
+     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+     const checkoutSession = await whop.payments.createCheckoutSession({
+       planId: env.SUBSCRIPTION_PLAN_ID
+     });
+
+     return NextResponse.json({
+       planId: env.SUBSCRIPTION_PLAN_ID,
+       checkoutId: checkoutSession.id,
+     });
+   }
    ```
 
-2. **Create plans** (checkout links) with pricing
+2. **Check user access** to experiences
    ```typescript
-   const plan = await client.plans.create({
-     product_id: product.id,
-     title: "Monthly Subscription",
-     plan_type: "renewal",
-     renewal_price: 29.99,
-     base_currency: "USD",
-     billing_period: 30,
-     visibility: "visible"
+   const access = await whop.access.checkIfUserHasAccessToExperience({
+     experienceId,
+     userId
+   });
+   console.log(access.accessLevel); // "admin" | "member" | "no_access"
+   ```
+
+3. **List user's receipts** to check purchases
+   ```typescript
+   const receipts = await whop.payments.listReceiptsForCompany({
+     companyId,
+     filter: {
+       accessPassIds: [planId],
+       statuses: ['succeeded']
+     }
    });
    
-   console.log('Checkout link:', plan.direct_link);
+   const userReceipts = receipts?.receipts?.nodes?.filter(
+     (r) => r?.member?.user?.id === userId
+   );
    ```
 
-3. **Check user access** in your app code
+4. **Gate features** based on subscription status
    ```typescript
-   const hasAccess = await client.users.checkAccess(userId, {
-     product_id: product.id
-   });
+   const hasActiveSubscription = userReceipts.some(
+     (r) => r.subscriptionStatus === "active"
+   );
    ```
-
-4. **Gate features** based on membership status
 
 ### Using the Agent User
 
-Apps receive `NEXT_PUBLIC_WHOP_AGENT_USER_ID` environment variable:
-- Use this to send automated DMs
-  ```typescript
-  await client.messages.create({
-    user_id: client.agentUserId, // From NEXT_PUBLIC_WHOP_AGENT_USER_ID
-    recipient_id: "user_123",
-    text: "Welcome to our community!"
-  });
-  ```
-- Build chatbots and notification systems
-- Automate welcome messages, reminders, alerts
-- Respond to user actions programmatically
+The `WhopServerSdk` is initialized with `onBehalfOfUserId` for automated actions:
+- Set to `NEXT_PUBLIC_WHOP_AGENT_USER_ID` for bot actions
+- Used for sending automated messages
+- Enables chatbots and notification systems
+
+**Note:** The agent user is configured during SDK initialization, not per-request.
 
 ## Key API Patterns
 
@@ -300,34 +320,34 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Create product (access pass)
-const product = await client.products.create({
-  title: "Premium Membership",
-  company_id: "biz_123",
-  description: "Full access to all features",
-  visibility: "visible"
+// Verify user authentication (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
+
+// Get user info
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
 });
 
-// Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly Plan",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30,
-  visibility: "visible"
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ 
+  planId: "plan_xxx" 
 });
 
-// The checkout URL
-console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
+// The checkout ID for iframe SDK
+console.log(checkout.id); // Use with iframeSdk.inAppPurchase()
 ```
 
 ## Terminology Reference
@@ -350,81 +370,84 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 
 ## Common API Examples
 
-### List Products on a Company
+### Authentication in API Routes
 ```typescript
-const products = await client.products.list({
-  company_id: "biz_123"
-});
+import { verifyUserToken } from '@whop/api';
 
-for await (const product of products) {
-  console.log(product.id, product.title);
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Proceed with authenticated request
 }
 ```
 
-### List Plans for a Product
+### Get Experience Data
 ```typescript
-const plans = await client.plans.list({
-  product_id: "prod_xyz789"
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxx" 
 });
-
-for await (const plan of plans) {
-  console.log(plan.id, plan.direct_link);
-}
+console.log(experience.name, experience.company.title);
 ```
 
-### Update a Plan
+### Get User Data
 ```typescript
-await client.plans.update("plan_abc123", {
-  title: "Updated Monthly Plan",
-  renewal_price: 39.99,
-  visibility: "visible"
-});
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
 ```
 
-### List Members of a Company
+### Check User Access
 ```typescript
-const members = await client.members.list({
-  company_id: "biz_123"
+const access = await whop.access.checkIfUserHasAccessToExperience({
+  experienceId: "exp_xxx",
+  userId: "user_xxx"
 });
-
-for await (const member of members) {
-  console.log(member.user.username, member.access_level);
-}
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
 ```
 
-### Create a Forum Post
+### Create Checkout Session
 ```typescript
-const post = await client.forumPosts.create({
-  forum_id: "forum_123",
-  title: "Welcome!",
-  content: "Welcome to our community"
+const checkout = await whop.payments.createCheckoutSession({
+  planId: "plan_xxx"
 });
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ planId, id: checkout.id });
 ```
 
-### Send a DM as Agent User
+### List Receipts (Filtered to User)
 ```typescript
-await client.messages.create({
-  user_id: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  recipient_id: "user_456",
-  text: "Thanks for joining! How can we help?"
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_xxx"],
+    statuses: ['succeeded']
+  }
 });
+
+// IMPORTANT: Filter to current user only
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
 ```
 
-### List Experiences for an App
+### List Members with Filters
 ```typescript
-const experiences = await client.experiences.list({
-  app_id: "app_123"
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
 });
 
-for await (const exp of experiences) {
-  console.log(exp.id, exp.company.title);
-}
+const nodes = members?.members?.nodes ?? [];
 ```
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/api`) for app development
-2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
+1. **Always use `WhopServerSdk`** from `@whop/api` package
+2. **Use object parameters with camelCase** - `{ companyId }`, `{ experienceId }`, `{ userId }`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
 5. **Cache user permissions** to avoid excessive API calls
@@ -432,15 +455,16 @@ for await (const exp of experiences) {
 7. **Test paywalling** thoroughly before launch
 8. **Follow OAuth best practices** for user authentication
 9. **Monitor API rate limits** and implement backoff strategies
-10. **Use async iterators** for pagination - The SDK handles it automatically
+10. **Filter all company-wide API responses** to current user only - critical for privacy
 
 ## Notes for LLM Agents
 
 ### API Usage
-- The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/api` (REST API)
-- **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
-- **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
+- Use `WhopServerSdk` from `@whop/api` package
+- Initialize with `appId`, `appApiKey`, `onBehalfOfUserId`, `companyId`
+- **Use camelCase for parameters**: `companyId`, `experienceId`, `userId`
+- **Use object-based params**: `{ experienceId }` not positional arguments
+- Always use optional chaining (`?.`) for nested API responses
 
 ### Terminology
 - Access passes and products are the same thing
@@ -457,21 +481,25 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
-  apiKey: process.env.WHOP_API_KEY, // Your API key
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
-### Pagination Pattern
-The SDK uses async iterators for automatic pagination:
+### API Response Pattern
+API responses use nested structures - always check for null/undefined:
 ```typescript
-// Automatically handles pagination
-for await (const item of client.products.list()) {
-  console.log(item.id);
-}
+// Safe property access
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const nodes = receipts?.receipts?.nodes ?? [];
+
+// Filter and transform safely
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
 ```
 
 # Whop Platform Structure & API Guide
@@ -667,92 +695,112 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 ### Creating a Whop App
 
-1. **Create the app** under your company
+1. **Initialize the SDK** in your lib/whop.ts
    ```typescript
-   import { WhopAPI } from '@whop/api';
+   import { WhopServerSdk } from '@whop/api';
+   import { env } from '~/env';
    
-   const client = new WhopAPI({
-     appID: 'app_xxxxxxxxxxxxxx',
-     apiKey: process.env.WHOP_API_KEY,
-   });
-   
-   const app = await client.apps.create({
-     name: "My App",
-     base_url: "https://myapp.com",
-     company_id: "biz_123"
+   export const whop = WhopServerSdk({
+     appId: env.NEXT_PUBLIC_WHOP_APP_ID,
+     appApiKey: env.WHOP_API_KEY,
+     onBehalfOfUserId: env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+     companyId: env.NEXT_PUBLIC_WHOP_COMPANY_ID,
    });
    ```
 
-2. **Configure app settings**
+2. **Create API routes** to interact with Whop
    ```typescript
-   await client.apps.update(app.id, {
-     base_url: "https://myapp.com",
-     base_dev_url: "http://localhost:3000",
-     base_preview_url: "https://staging.myapp.com",
-     description: "My app description",
-     icon: "attachment_id_here"
-   });
+   // app/(whop-api)/api/experience/[experienceId]/route.ts
+   import { NextRequest, NextResponse } from 'next/server';
+   import { whop } from '~/lib/whop';
+   
+   export async function GET(
+     req: NextRequest,
+     { params }: { params: Promise<{ experienceId: string }> }
+   ) {
+     const { experienceId } = await params;
+     const experience = await whop.experiences.getExperience({ experienceId });
+     return NextResponse.json(experience);
+   }
    ```
 
-3. **Submit for review**
-   - Apps must be reviewed before appearing in the App Store
-   - Once approved, other creators can install your app
+3. **Authenticate users** in protected routes
+   ```typescript
+   import { verifyUserToken } from '@whop/api';
+   
+   const { userId } = await verifyUserToken(req.headers);
+   if (!userId) {
+     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+   }
+   ```
 
-4. **Handle installations**
-   - When installed, your app receives an experience ID
-   - Use webhooks to track installations/uninstallations
-   - Configure experience-specific settings
+4. **Handle user data safely**
+   - Always verify authentication first
+   - Filter company-wide data to current user only
+   - Use optional chaining for nested properties
+   - Return minimal data to avoid privacy leaks
 
 ### Paywalling Your App
 
-1. **Create an access pass** for your app features
+1. **Create checkout endpoint** for your plans
    ```typescript
-   const product = await client.products.create({
-     title: "Premium Features",
-     company_id: "biz_123",
-     description: "Access to premium features",
-     visibility: "visible"
-   });
+   // app/(whop-api)/api/checkout/subscription/route.ts
+   import { verifyUserToken } from '@whop/api';
+   
+   export async function POST(req: NextRequest) {
+     const { userId } = await verifyUserToken(req.headers);
+     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+     const checkoutSession = await whop.payments.createCheckoutSession({
+       planId: env.SUBSCRIPTION_PLAN_ID
+     });
+
+     return NextResponse.json({
+       planId: env.SUBSCRIPTION_PLAN_ID,
+       checkoutId: checkoutSession.id,
+     });
+   }
    ```
 
-2. **Create plans** (checkout links) with pricing
+2. **Check user access** to experiences
    ```typescript
-   const plan = await client.plans.create({
-     product_id: product.id,
-     title: "Monthly Subscription",
-     plan_type: "renewal",
-     renewal_price: 29.99,
-     base_currency: "USD",
-     billing_period: 30,
-     visibility: "visible"
+   const access = await whop.access.checkIfUserHasAccessToExperience({
+     experienceId,
+     userId
+   });
+   console.log(access.accessLevel); // "admin" | "member" | "no_access"
+   ```
+
+3. **List user's receipts** to check purchases
+   ```typescript
+   const receipts = await whop.payments.listReceiptsForCompany({
+     companyId,
+     filter: {
+       accessPassIds: [planId],
+       statuses: ['succeeded']
+     }
    });
    
-   console.log('Checkout link:', plan.direct_link);
+   const userReceipts = receipts?.receipts?.nodes?.filter(
+     (r) => r?.member?.user?.id === userId
+   );
    ```
 
-3. **Check user access** in your app code
+4. **Gate features** based on subscription status
    ```typescript
-   const hasAccess = await client.users.checkAccess(userId, {
-     product_id: product.id
-   });
+   const hasActiveSubscription = userReceipts.some(
+     (r) => r.subscriptionStatus === "active"
+   );
    ```
-
-4. **Gate features** based on membership status
 
 ### Using the Agent User
 
-Apps receive `NEXT_PUBLIC_WHOP_AGENT_USER_ID` environment variable:
-- Use this to send automated DMs
-  ```typescript
-  await client.messages.create({
-    user_id: client.agentUserId, // From NEXT_PUBLIC_WHOP_AGENT_USER_ID
-    recipient_id: "user_123",
-    text: "Welcome to our community!"
-  });
-  ```
-- Build chatbots and notification systems
-- Automate welcome messages, reminders, alerts
-- Respond to user actions programmatically
+The `WhopServerSdk` is initialized with `onBehalfOfUserId` for automated actions:
+- Set to `NEXT_PUBLIC_WHOP_AGENT_USER_ID` for bot actions
+- Used for sending automated messages
+- Enables chatbots and notification systems
+
+**Note:** The agent user is configured during SDK initialization, not per-request.
 
 ## Key API Patterns
 
@@ -772,34 +820,34 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Create product (access pass)
-const product = await client.products.create({
-  title: "Premium Membership",
-  company_id: "biz_123",
-  description: "Full access to all features",
-  visibility: "visible"
+// Verify user authentication (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
+
+// Get user info
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
 });
 
-// Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly Plan",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30,
-  visibility: "visible"
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ 
+  planId: "plan_xxx" 
 });
 
-// The checkout URL
-console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
+// The checkout ID for iframe SDK
+console.log(checkout.id); // Use with iframeSdk.inAppPurchase()
 ```
 
 ## Terminology Reference
@@ -822,81 +870,84 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 
 ## Common API Examples
 
-### List Products on a Company
+### Authentication in API Routes
 ```typescript
-const products = await client.products.list({
-  company_id: "biz_123"
-});
+import { verifyUserToken } from '@whop/api';
 
-for await (const product of products) {
-  console.log(product.id, product.title);
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Proceed with authenticated request
 }
 ```
 
-### List Plans for a Product
+### Get Experience Data
 ```typescript
-const plans = await client.plans.list({
-  product_id: "prod_xyz789"
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxx" 
 });
-
-for await (const plan of plans) {
-  console.log(plan.id, plan.direct_link);
-}
+console.log(experience.name, experience.company.title);
 ```
 
-### Update a Plan
+### Get User Data
 ```typescript
-await client.plans.update("plan_abc123", {
-  title: "Updated Monthly Plan",
-  renewal_price: 39.99,
-  visibility: "visible"
-});
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
 ```
 
-### List Members of a Company
+### Check User Access
 ```typescript
-const members = await client.members.list({
-  company_id: "biz_123"
+const access = await whop.access.checkIfUserHasAccessToExperience({
+  experienceId: "exp_xxx",
+  userId: "user_xxx"
 });
-
-for await (const member of members) {
-  console.log(member.user.username, member.access_level);
-}
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
 ```
 
-### Create a Forum Post
+### Create Checkout Session
 ```typescript
-const post = await client.forumPosts.create({
-  forum_id: "forum_123",
-  title: "Welcome!",
-  content: "Welcome to our community"
+const checkout = await whop.payments.createCheckoutSession({
+  planId: "plan_xxx"
 });
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ planId, id: checkout.id });
 ```
 
-### Send a DM as Agent User
+### List Receipts (Filtered to User)
 ```typescript
-await client.messages.create({
-  user_id: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  recipient_id: "user_456",
-  text: "Thanks for joining! How can we help?"
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_xxx"],
+    statuses: ['succeeded']
+  }
 });
+
+// IMPORTANT: Filter to current user only
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
 ```
 
-### List Experiences for an App
+### List Members with Filters
 ```typescript
-const experiences = await client.experiences.list({
-  app_id: "app_123"
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
 });
 
-for await (const exp of experiences) {
-  console.log(exp.id, exp.company.title);
-}
+const nodes = members?.members?.nodes ?? [];
 ```
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/api`) for app development
-2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
+1. **Always use `WhopServerSdk`** from `@whop/api` package
+2. **Use object parameters with camelCase** - `{ companyId }`, `{ experienceId }`, `{ userId }`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
 5. **Cache user permissions** to avoid excessive API calls
@@ -904,15 +955,16 @@ for await (const exp of experiences) {
 7. **Test paywalling** thoroughly before launch
 8. **Follow OAuth best practices** for user authentication
 9. **Monitor API rate limits** and implement backoff strategies
-10. **Use async iterators** for pagination - The SDK handles it automatically
+10. **Filter all company-wide API responses** to current user only - critical for privacy
 
 ## Notes for LLM Agents
 
 ### API Usage
-- The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/api` (REST API)
-- **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
-- **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
+- Use `WhopServerSdk` from `@whop/api` package
+- Initialize with `appId`, `appApiKey`, `onBehalfOfUserId`, `companyId`
+- **Use camelCase for parameters**: `companyId`, `experienceId`, `userId`
+- **Use object-based params**: `{ experienceId }` not positional arguments
+- Always use optional chaining (`?.`) for nested API responses
 
 ### Terminology
 - Access passes and products are the same thing
@@ -929,20 +981,24 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
-  apiKey: process.env.WHOP_API_KEY, // Your API key
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
-### Pagination Pattern
-The SDK uses async iterators for automatic pagination:
+### API Response Pattern
+API responses use nested structures - always check for null/undefined:
 ```typescript
-// Automatically handles pagination
-for await (const item of client.products.list()) {
-  console.log(item.id);
-}
+// Safe property access
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const nodes = receipts?.receipts?.nodes ?? [];
+
+// Filter and transform safely
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
 ```
 

@@ -1,0 +1,22 @@
+{
+  "name": "supabase",
+  "description": "Supabase (PostgreSQL) database with Drizzle ORM",
+  "files": [
+    "drizzle.config.ts",
+    "src/db/**"
+  ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
+    "drizzle-orm": "^0.36.4",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.29.1"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  }
+}

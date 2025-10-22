@@ -192,27 +192,32 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 
 ```bash
 npm install @whop/api
+# or
+bun add @whop/api
 ```
 
 ## Basic Usage
 
-```javascript
-import { WhopAPI } from '@whop/api';
+```typescript
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: 'your-api-key',
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Example: List products
-const products = await client.products.list();
+// Example: Get experience
+const experience = await whop.experiences.getExperience({ experienceId });
 
-// Example: Create a plan
-const plan = await client.plans.create({
-  product_id: 'prod_xxxxx',
-  price: 29.99,
-  interval: 'month'
+// Example: Create checkout session
+const checkout = await whop.payments.createCheckoutSession({
+  planId: 'plan_xxxxx'
 });
+
+// Example: Verify user (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
 ```
 
 ## Authentication
@@ -478,27 +483,32 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 
 ```bash
 npm install @whop/api
+# or
+bun add @whop/api
 ```
 
 ## Basic Usage
 
-```javascript
-import { WhopAPI } from '@whop/api';
+```typescript
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: 'your-api-key',
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Example: List products
-const products = await client.products.list();
+// Example: Get experience
+const experience = await whop.experiences.getExperience({ experienceId });
 
-// Example: Create a plan
-const plan = await client.plans.create({
-  product_id: 'prod_xxxxx',
-  price: 29.99,
-  interval: 'month'
+// Example: Create checkout session
+const checkout = await whop.payments.createCheckoutSession({
+  planId: 'plan_xxxxx'
 });
+
+// Example: Verify user (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
 ```
 
 ## Authentication
