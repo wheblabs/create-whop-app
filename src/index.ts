@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { Whop } from '@whoplabs/whop-client'
 import chalk from 'chalk'
 import Enquirer from 'enquirer'
+import { Listr } from 'listr2'
 import ora from 'ora'
 import { authStep } from './auth-step'
 
@@ -342,127 +343,203 @@ async function main() {
 	console.log(`${chalk.green('✔')} ${chalk.dim('(4/4) Database:')} ${chalk.dim(databaseDisplay)}`)
 	console.log('')
 
-	// Step 7: Setting up project (grouped)
-	const setupSpinner = ora({
-		text: 'Setting up project...',
-		color: 'yellow',
-	}).start()
+	// Step 7: Setting up project with listr2
+	let app!: { id: string; name: string }
+	// biome-ignore lint/suspicious/noExplicitAny: SDK types are complex
+	let oneTimePass!: any
+	// biome-ignore lint/suspicious/noExplicitAny: SDK types are complex
+	let subscriptionPass!: any
+	// biome-ignore lint/suspicious/noExplicitAny: SDK types are complex
+	let credentials!: any
+	const randomName = `app-${Date.now()}`
+	const templateDir = join(__dirname, '..', 'templates', 'whop-next')
 
-	let app: { id: string; name: string }
-	try {
-		// Create with random name first (workaround for "whop" in name restriction)
-		const randomName = `app-${Date.now()}`
-		app = await whop.apps.create({
-			name: randomName,
-			companyId: createCompany,
-			baseUrl: 'https://create-whop-app-instructions.whoplabs.io/experiences/[experienceId]',
-		})
+	const tasks = new Listr([
+		{
+			title: 'Creating app',
+			task: async (ctx) => {
+				// Create with random name first (workaround for "whop" in name restriction)
+				app = await whop.apps.create({
+					name: randomName,
+					companyId: createCompany,
+					baseUrl: 'https://create-whop-app-instructions.whoplabs.io/experiences/[experienceId]',
+				})
 
-		// Update with user's actual name
-		await whop.apps.update(app.id, {
-			name: name.trim(),
-		})
+				// Update with user's actual name
+				await whop.apps.update(app.id, {
+					name: name.trim(),
+				})
 
-		setupSpinner.text = 'Installing app...'
-		await whop.companies.installApp(installCompanyId, app.id)
+				ctx.app = app
+			},
+		},
+		{
+			title: 'Installing app',
+			task: async (ctx, task) => {
+				task.title = 'Installing app (this may take 15-30 seconds)'
+				await whop.companies.installApp(installCompanyId, ctx.app.id)
+				task.title = 'Installing app'
+			},
+		},
+		{
+			title: 'Configuring access passes',
+			task: async (_ctx) => {
+				// Update app's checkout link with the app name
+				const { accessPasses } = await whop.companies.listAccessPasses(createCompany, {
+					accessPassTypes: ['app'],
+				})
+				const appAccessPass = accessPasses.find((a) => a.title === randomName)
+				if (!appAccessPass) throw new Error('No app access pass found')
+				const { plans } = await whop.companies.listAccessPassPlans(createCompany, appAccessPass.id)
+				const appPlan = plans[0]
+				if (!appPlan) throw new Error('No app plan found')
 
-		// Update app's checkout link with the app name
-		const { accessPasses } = await whop.companies.listAccessPasses(createCompany, {
-			accessPassTypes: ['app'],
-		})
-		const appAccessPass = accessPasses.find((a) => a.title === randomName)
-		if (!appAccessPass) throw new Error('No app access pass found')
-		const { plans } = await whop.companies.listAccessPassPlans(createCompany, appAccessPass.id)
-		const appPlan = plans[0]
-		if (!appPlan) throw new Error('No app plan found')
-
-		await whop.companies.updatePlan({
-			id: appPlan.id,
-			title: name.trim(),
-
-			visibility: 'hidden',
-		})
-
-		await whop.companies.updateAccessPass({
-			id: appAccessPass.id,
-			title: name.trim(),
-			visibility: 'hidden',
-		})
-
-		await whop.companies.listAccessPassPlans(createCompany, appAccessPass.id)
-
-		// Setup access passes for whop payments
-		const timestamp = Date.now().toString(36)
-		const [oneTimePass, subscriptionPass] = await Promise.all([
-			whop.companies.createAccessPass({
-				companyId: createCompany,
-				title: 'Test one time payment',
-				description: 'One time payment for the app',
-				route: `one-time-payment-${timestamp}`,
-				planOptions: {
-					planType: 'one_time',
-					initialPrice: 1,
-					baseCurrency: 'usd',
+				await whop.companies.updatePlan({
+					id: appPlan.id,
+					title: name.trim(),
 					visibility: 'hidden',
-				},
-				visibility: 'hidden',
-			}),
+				})
 
-			whop.companies.createAccessPass({
-				companyId: createCompany,
-				title: 'Test subscription',
-				description: 'Subscription for the app',
-				route: `subscription-${timestamp}`,
-				planOptions: {
-					planType: 'renewal',
-					baseCurrency: 'usd',
-					renewalPrice: 1,
-					billingPeriod: 30,
+				await whop.companies.updateAccessPass({
+					id: appAccessPass.id,
+					title: name.trim(),
 					visibility: 'hidden',
-				},
-				visibility: 'hidden',
-			}),
-		])
+				})
 
-		// Step 8: Create project directory
-		mkdirSync(dest, { recursive: true })
+				// Setup access passes for whop payments
+				const timestamp = Date.now().toString(36)
+				const [otp, sub] = await Promise.all([
+					whop.companies.createAccessPass({
+						companyId: createCompany,
+						title: 'Test one time payment',
+						description: 'One time payment for the app',
+						route: `one-time-payment-${timestamp}`,
+						planOptions: {
+							planType: 'one_time',
+							initialPrice: 1,
+							baseCurrency: 'usd',
+							visibility: 'hidden',
+						},
+						visibility: 'hidden',
+					}),
+					whop.companies.createAccessPass({
+						companyId: createCompany,
+						title: 'Test subscription',
+						description: 'Subscription for the app',
+						route: `subscription-${timestamp}`,
+						planOptions: {
+							planType: 'renewal',
+							baseCurrency: 'usd',
+							renewalPrice: 1,
+							billingPeriod: 30,
+							visibility: 'hidden',
+						},
+						visibility: 'hidden',
+					}),
+				])
 
-		const templateDir = join(__dirname, '..', 'templates', 'whop-next')
+				oneTimePass = otp
+				subscriptionPass = sub
+			},
+		},
+		{
+			title: 'Copying template files',
+			task: async () => {
+				mkdirSync(dest, { recursive: true })
+				await copyTemplate(templateDir, dest)
 
-		setupSpinner.text = 'Copying template files...'
-		await copyTemplate(templateDir, dest)
+				// Add database connector if selected
+				if (needsDatabase === 'yes' && databaseType) {
+					const addonPath = join(__dirname, '..', 'templates', 'addons', databaseType)
+					await applyAddon(addonPath, dest)
+				}
+			},
+		},
+		{
+			title: 'Installing dependencies',
+			task: async (_ctx, task) => {
+				const installCmd = getInstallCommand(packageManager)
+				const cmdParts = installCmd.split(' ')
+				const installCommand = cmdParts[0] || 'npm'
+				const installArgs = cmdParts.slice(1)
 
-		// Add database connector if selected
-		if (needsDatabase === 'yes' && databaseType) {
-			setupSpinner.text = 'Setting up database...'
-			const addonPath = join(__dirname, '..', 'templates', 'addons', databaseType)
-			await applyAddon(addonPath, dest)
-		}
+				await new Promise<void>((resolve, reject) => {
+					const child = spawn(installCommand, installArgs, {
+						cwd: dest,
+						stdio: 'pipe',
+					})
 
-		setupSpinner.text = 'Installing dependencies (this may take a minute)...'
-		const installCmd = getInstallCommand(packageManager)
-		execSync(installCmd, { cwd: dest, stdio: 'ignore' })
+					let installedCount = 0
+					let hasStarted = false
 
-		setupSpinner.text = 'Configuring environment...'
-		const credentials = await whop.apps.getCredentials(app.id, createCompany)
+					// Parse output to count packages
+					child.stdout?.on('data', (data) => {
+						const output = data.toString()
 
-		const envContent = [
-			`WHOP_API_KEY=${credentials.apiKey.token}`,
-			`NEXT_PUBLIC_WHOP_APP_ID=${credentials.id}`,
-			`NEXT_PUBLIC_WHOP_AGENT_USER_ID=${credentials.agentUsers[0]?.id || ''}`,
-			`NEXT_PUBLIC_WHOP_COMPANY_ID=${createCompany}`,
-			``,
-			`ONE_TIME_PURCHASE_ACCESS_PASS_PLAN_ID=${oneTimePass.defaultPlan?.id}`,
-			`ONE_TIME_PURCHASE_ACCESS_PASS_ID=${oneTimePass.id}`,
-			`SUBSCRIPTION_PURCHASE_ACCESS_PASS_PLAN_ID=${subscriptionPass.defaultPlan?.id}`,
-			`SUBSCRIPTION_PURCHASE_ACCESS_PASS_ID=${subscriptionPass.id}`,
-		].join('\n')
+						// For bun: count "+" lines for installed packages
+						if (packageManager === 'bun') {
+							const matches = output.match(/^\+/gm)
+							if (matches) {
+								installedCount += matches.length
+								task.title = `Installing dependencies (${installedCount} packages)`
+							} else if (!hasStarted) {
+								hasStarted = true
+								task.title = 'Installing dependencies (downloading...)'
+							}
+						} else {
+							// For npm/pnpm/yarn: just show status updates
+							if (output.includes('adding') || output.includes('added')) {
+								const match = output.match(/added (\d+)/)
+								if (match) {
+									task.title = `Installing dependencies (${match[1]} packages)`
+								}
+							} else if (!hasStarted) {
+								hasStarted = true
+								task.title = 'Installing dependencies (resolving...)'
+							}
+						}
+					})
 
-		let finalEnvContent = envContent
+					child.on('exit', (code) => {
+						if (code === 0) {
+							task.title = 'Installing dependencies'
+							resolve()
+						} else {
+							reject(new Error(`Installation failed with code ${code}`))
+						}
+					})
 
-		// Add Supabase configuration if selected
-		if (databaseType === 'supabase') {
-			finalEnvContent += `\n\n# Supabase Configuration
+					child.on('error', (err) => {
+						reject(err)
+					})
+				})
+			},
+		},
+		{
+			title: 'Configuring environment',
+			task: async (ctx) => {
+				credentials = await whop.apps.getCredentials(ctx.app.id, createCompany)
+
+				const envContent = [
+					`WHOP_API_KEY=${credentials.apiKey.token}`,
+					`NEXT_PUBLIC_WHOP_APP_ID=${credentials.id}`,
+					`NEXT_PUBLIC_WHOP_AGENT_USER_ID=${credentials.agentUsers[0]?.id || ''}`,
+					`NEXT_PUBLIC_WHOP_COMPANY_ID=${createCompany}`,
+					``,
+					`ONE_TIME_PURCHASE_ACCESS_PASS_PLAN_ID=${oneTimePass.defaultPlan?.id}`,
+					`ONE_TIME_PURCHASE_ACCESS_PASS_ID=${oneTimePass.id}`,
+					`SUBSCRIPTION_PURCHASE_ACCESS_PASS_PLAN_ID=${subscriptionPass.defaultPlan?.id}`,
+					`SUBSCRIPTION_PURCHASE_ACCESS_PASS_ID=${subscriptionPass.id}`,
+					``,
+					`# Project path for "Open in Cursor" button`,
+					`NEXT_PUBLIC_PROJECT_PATH=${dest}`,
+				].join('\n')
+
+				let finalEnvContent = envContent
+
+				// Add Supabase configuration if selected
+				if (databaseType === 'supabase') {
+					finalEnvContent += `\n\n# Supabase Configuration
 # 1. Create project: https://app.supabase.com
 # 2. Get credentials: Project Settings > API
 # 3. Get DATABASE_URL: Project Settings > Database > Connection String (URI)
@@ -471,25 +548,15 @@ NEXT_PUBLIC_SUPABASE_URL=https://[YOUR-PROJECT-REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 `
-		}
+				}
 
-		const envFilePath = join(dest, '.env')
-		writeFileSync(envFilePath, finalEnvContent)
+				const envFilePath = join(dest, '.env')
+				writeFileSync(envFilePath, finalEnvContent)
+			},
+		},
+	])
 
-		setupSpinner.stop()
-		setupSpinner.clear()
-
-		// Show all completed steps
-		console.log(`${chalk.green('✔')} Setting up project...`)
-		console.log(chalk.dim(`  ├─ Created app "${name.trim()}"`))
-		console.log(chalk.dim(`  ├─ Installed on ${installCompanyData?.title}`))
-		console.log(chalk.dim('  ├─ Template copied'))
-		console.log(chalk.dim('  ├─ Dependencies installed'))
-		console.log(chalk.dim('  └─ Environment configured'))
-	} catch (error) {
-		setupSpinner.fail('Failed to set up project')
-		throw error
-	}
+	await tasks.run()
 
 	// Get app URL
 	const appUrl = await whop.apps.getUrl(app.id, installCompanyId)

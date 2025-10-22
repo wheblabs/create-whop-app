@@ -1,0 +1,197 @@
+---
+description: How to list members of a Whop company/community.
+globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
+alwaysApply: false
+---
+
+# Listing Members in Whop Communities
+
+## Important: Filter Out App Agents by Default
+
+**When a developer requests to list members of their Whop community, you MUST filter out app agents by default, unless they explicitly ask to include them.**
+
+## What Are App Agents?
+
+Each Whop app has an **agent user** automatically attached to it. When an app is installed on a company:
+- An agent member is automatically created
+- The agent appears in the company's member list
+- The agent has admin-level access to the company
+- The agent is used for automated actions (DMs, notifications, etc.)
+
+## Problem
+
+When you call `whop.companies.listMembers()`, the API returns **all members including app agents**. This means:
+- A company with 100 apps installed will have 100+ agent members
+- The list becomes cluttered with non-human members
+- Developers typically only want to see real users
+
+## Identifying App Agents
+
+App agents have these identifying features:
+
+### 1. **Email is null or empty** (Most Reliable)
+```typescript
+member.user.email === null
+member.user.email === ""
+member.user.email?.trim() === ""
+```
+
+### 2. Username Pattern
+```
+app-[timestamp]s-agent
+// Examples:
+// app-1761020340606s-agent
+// app-1761163136087s-agent
+```
+
+### 3. Name Pattern
+```
+app-[timestamp]'s agent
+// Examples:
+// app-1761020340606's agent
+// app-1761163136087's agent
+```
+
+### 4. Access Level
+App agents typically have `accessLevel: "admin"`
+
+### 5. Other Characteristics
+- `totalSpent: 0` (they never make purchases)
+- Generated profile pictures from UI Avatars
+- Created at the same time as app installation
+
+## How to Filter Out App Agents
+
+### ✅ Recommended Method: Check Email
+
+```typescript
+// Filter out app agents (they have null or empty email addresses)
+const realMembers = members.filter(
+  (member) => member?.user?.email && member?.user?.email.trim() !== '',
+)
+```
+
+This is the most reliable method because:
+- App agents systematically have `null` or empty emails
+- Real users always have valid email addresses
+- It's a structural difference, not dependent on naming conventions
+
+### Alternative Methods
+
+```typescript
+// Method 2: Username pattern matching
+const realMembers = members.filter(
+  (member) => !member?.user?.username?.match(/^app-\d+s?-agent$/),
+)
+
+// Method 3: Combination approach
+const realMembers = members.filter((member) => {
+  const hasEmail = member?.user?.email && member.user.email.trim() !== ''
+  const isNotAgentPattern = !member?.user?.username?.match(/^app-\d+s?-agent$/)
+  return hasEmail && isNotAgentPattern
+})
+```
+
+## Complete Example
+
+```typescript
+import { verifyUserToken } from '@whop/api'
+import { NextRequest, NextResponse } from 'next/server'
+import { whop } from '~/lib/whop'
+
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers)
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const companyId = process.env.NEXT_PUBLIC_WHOP_COMPANY_ID
+  const membersResponse = await whop.companies.listMembers({
+    companyId,
+    filters: {},
+  })
+
+  const members = membersResponse?.members?.nodes ?? []
+
+  // Filter out app agents (they have null or empty email addresses)
+  const realMembers = members.filter(
+    (member) => member?.user?.email && member?.user?.email.trim() !== '',
+  )
+
+  const transformedMembers = realMembers.map((member) => ({
+    id: member?.id ?? '',
+    user: {
+      id: member?.user?.id ?? '',
+      username: member?.user?.username ?? '',
+      name: member?.user?.name ?? '',
+      email: member?.user?.email ?? '',
+      profilePicUrl: member?.imageSrcset?.original ?? null,
+    },
+    status: member?.status ?? 'unknown',
+    createdAt: member?.createdAt ?? 0,
+    joinedAt: member?.joinedAt ?? 0,
+  }))
+
+  return NextResponse.json({
+    members: transformedMembers,
+    totalCount: transformedMembers.length,
+  })
+}
+```
+
+## When to Include App Agents
+
+Only include app agents if the developer **explicitly requests** them:
+- "list all members including agents"
+- "show me app agents"
+- "include app agent users"
+
+Otherwise, **always filter them out by default**.
+
+## Member Data Structure
+
+Real members have this structure:
+```typescript
+{
+  "__typename": "CompanyMember",
+  "accessLevel": "customer" | "admin",
+  "createdAt": 1761163666,
+  "id": "mber_xxxxx",
+  "imageSrcset": {
+    "__typename": "ImgSrcset",
+    "original": "https://img-v2-prod.whop.com/..."
+  },
+  "joinedAt": 1761163666,
+  "mrr": "$0.00",
+  "phone": null | string,
+  "status": "joined" | "active" | ...,
+  "totalSpent": 0,
+  "updatedAtMs": "1761163670271",
+  "usdTotalSpent": "$0.00",
+  "user": {
+    "__typename": "CompanyMemberUser",
+    "email": "user@example.com",  // ✓ Real users have emails
+    "id": "user_xxxxx",
+    "name": "John Doe",
+    "username": "johndoe"
+  }
+}
+```
+
+App agents have the same structure but:
+```typescript
+"user": {
+  "email": null,  // ✗ Agents have null emails
+  "name": "app-1761163344457's agent",
+  "username": "app-1761163344457s-agent"
+}
+```
+
+## Summary for LLM Agents
+
+1. **ALWAYS filter out app agents by default** when listing members
+2. **Use email check** as the primary filtering method
+3. **Only include agents** if explicitly requested
+4. **Document** the filtering in comments for clarity
+5. **Return accurate counts** that reflect only real members
+

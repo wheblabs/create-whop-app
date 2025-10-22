@@ -1,7 +1,7 @@
 ---
-alwaysApply: true
+description: The list of whop rest api endpoints and their usage.
+alwaysApply: false
 ---
-
 # Whop REST API - Complete Endpoint Reference
 
 Source: https://docs.whop.com/api-reference/apps/list-apps

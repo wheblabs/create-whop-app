@@ -98,14 +98,14 @@ export default function Page() {
         </ol>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <Link
+          <a
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://x.com/wheblabs"
+            href={`cursor://file${process.env.NEXT_PUBLIC_PROJECT_PATH}?args=-n`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Follow us on 𝕏
-          </Link>
+            Open in Cursor
+          </a>
           <Link
             className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
             href="https://docs.whop.com/sdk/whop-api-client"
@@ -200,7 +200,7 @@ export default function Page() {
           >
             Whop
           </Link>{" "}
-          or{" "}
+          and{" "}
           <Link
             className="underline hover:text-gray-400 transition-colors"
             href="https://x.com/wheblabs"

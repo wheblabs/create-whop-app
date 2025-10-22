@@ -1,838 +1,1455 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
+description: Instructions on how to use the whop api.
+globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
+alwaysApply: false
+---
+# Whop API - Instructions for LLM Agents
+
+## Critical: Use ONLY the Recommended API Package
+
+**Package**: `@whop/api` with `WhopServerSdk`  
+**Documentation**: https://docs.whop.com/apps/api/getting-started  
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
+
+**Important Note:** Official docs may reference `@whop/sdk`, but use `WhopServerSdk` from `@whop/api` instead. The API structure uses:
+- `WhopServerSdk()` function (not `new WhopAPI()` class)
+- Object parameters: `{ experienceId }` (not positional args)
+- CamelCase properties: `companyId`, `experienceId`, `userId`
+- Nested responses requiring optional chaining: `receipts?.receipts?.nodes`
+
+### DO Use
+- `@whop/api` package with `WhopServerSdk`
+- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
+- Optional chaining (`?.`) for nested API responses
+- Official documentation at https://docs.whop.com/
+
+### DO NOT Use
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
+- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
+- ❌ GraphQL SDK (deprecated)
+- ❌ API v2 (deprecated)
+- ❌ API v5 (deprecated)
+- ❌ Internal GraphQL API (not public, unsupported)
+- ❌ Positional arguments (use object parameters)
+
+## Common Patterns: Getting IDs from Context
+
+### Getting Experience ID from the URL Path
+
+In Whop apps, the experience ID is typically available in the URL path:
+
+```typescript
+// Next.js App Router - from params
+export default function ExperiencePage({ params }: { params: { experienceId: string } }) {
+  const experienceId = params.experienceId; // e.g., "exp_xxxxxxxxxxxxxx"
+  // ...
+}
+
+// Next.js Pages Router - from router
+import { useRouter } from 'next/router';
+
+function ExperiencePage() {
+  const router = useRouter();
+  const experienceId = router.query.experienceId as string;
+  // ...
+}
+```
+
+### Getting Company ID from Experience ID
+
+Once you have the experience ID, you can fetch the experience to get the company ID:
+
+```typescript
+import { WhopServerSdk } from '@whop/api';
+
+const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
+});
+
+// Retrieve the experience
+const experience = await whop.experiences.getExperience({ experienceId });
+
+// Get the company ID from the experience
+const companyId = experience.company.id; // e.g., "biz_xxxxxxxxxxxxxx"
+
+// Now you can use the company ID for other operations
+const members = await whop.companies.listMembers({
+  companyId: companyId,
+  filters: {}
+});
+```
+
+**Experience Object Structure:**
+```typescript
+{
+  id: "exp_xxxxxxxxxxxxxx",
+  name: "My App Instance",
+  order: "123.45",
+  created_at: "2023-12-01T05:00:00.401Z",
+  app: {
+    id: "app_xxxxxxxxxxxxxx",
+    name: "My App"
+  },
+  company: {
+    id: "biz_xxxxxxxxxxxxxx",  // <- This is the company ID
+    title: "My Community",
+    route: "my-community"
+  },
+  products: [
+    {
+      id: "prod_xxxxxxxxxxxxx",
+      route: "premium-access",
+      title: "Premium Access"
+    }
+  ]
+}
+```
+
+## What the REST API Can Do
+
+### ✅ Supported Operations
+
+#### App Development
+- Create, update, retrieve, and list apps
+- Create and manage app builds for iOS, Android, Web
+- Promote builds to production
+- Configure app URLs (production, dev, preview)
+- Set app permissions and OAuth scopes
+
+#### Products & Monetization
+- Create, update, delete, and list products (access passes)
+- Create, update, delete, and list plans (checkout links)
+- Get checkout URLs via `direct_link` field on plans
+- Configure pricing (one-time, recurring, expiring)
+- Set up payment methods (card, PayPal, ACH, etc.)
+- Configure trials and discounts
+
+#### Payment Processing
+- List and retrieve payments
+- Refund, retry, and void payments
+- Create and manage invoices
+- Process transfers to creators
+- Access ledger account balances
+- Configure checkout settings
+
+#### Company & Member Management
+- Retrieve company information
+- List and retrieve members
+- List and manage memberships (cancel, pause, resume)
+- Manage authorized users (admins)
+- Approve/deny waitlist entries
+- Create and track shipments
+
+#### Content & Communication
+- Retrieve user information and check access
+- Create, update, and manage experiences (app instances)
+- Attach/detach experiences to products
+- Create and list forum posts
+- Update forum settings
+- Send direct messages (DMs)
+- Create and manage chat channels
+- Create and manage support channels
+- Add reactions to messages
+- Track course lesson interactions
+
+#### Special Features
+- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
+- **Webhooks**: Invoice events (created, paid, past due, voided)
+- **Pagination**: Automatic via async iterators
+- **Access Control**: Check if users have access to products
+
+### ❌ What the REST API Cannot Do
+
+The REST API does **NOT** support:
+- Advanced GraphQL-style queries with custom field selection
+- Nested mutations in a single request
+- Direct database schema access
+- Creating companies (companies must exist first)
+- Complex filtering beyond what's exposed in query parameters
+- Batch operations (must make individual calls)
+- Real-time subscriptions (use webhooks instead)
+- Custom SQL-like queries
+
+## Finding Documentation
+
+### Primary Sources (Always Check First)
+
+1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
+   - Complete API reference with examples
+   - All endpoints documented
+   - Request/response schemas
+   
+2. **SDK Documentation**: https://docs.whop.com/api-reference/
+   - Individual endpoint pages
+   - Code examples in JavaScript
+   - Query parameters and response formats
+
+3. **App Development Guide**: https://docs.whop.com/apps
+   - High-level concepts
+   - OAuth and authentication flows
+   - Webhooks and event handling
+
+### When Documentation is Insufficient
+
+If the official docs don't have the information you need:
+
+#### Use Exa MCP for Additional Context
+
+```typescript
+// Example: Search for Whop SDK usage patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop API @whop/api create product with plans example"
+})
+
+// Example: Find implementation details
+mcp_exa_get_code_context_exa({
+  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
+})
+
+// Example: Find error handling patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop API @whop/api error handling payment refund retry"
+})
+```
+
+#### When to Use Exa MCP
+- Official docs don't cover your specific use case
+- Need real-world code examples
+- Looking for error handling patterns
+- Want to see how others have implemented features
+- Need to understand undocumented behavior
+- Troubleshooting specific errors
+
+#### What to Search For
+- Package name: `@whop/api` and `WhopServerSdk`
+- Specific methods: `whop.experiences.getExperience`, `whop.payments.createCheckoutSession`
+- Error messages you're encountering
+- Feature combinations: "Whop API WhopServerSdk checkout receipts"
+- Integration patterns: "Whop API verifyUserToken authentication"
+
+## SDK Structure
+
+### Client Initialization
+```typescript
+import { WhopServerSdk } from '@whop/api';
+
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
+});
+```
+
+### Resource Methods Pattern
+All resources follow object-based parameter patterns:
+
+```typescript
+// Get single resource
+const experience = await whop.experiences.getExperience({ experienceId });
+
+// Get user
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
+});
+
+// List resources with filters
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ['prod_xxx'],
+  },
+});
+
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ planId });
+
+// List receipts
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ['prod_xxx'],
+    statuses: ['succeeded'],
+  },
+});
+
+// Verify user token (imported separately)
+import { verifyUserToken } from '@whop/api';
+const { userId } = await verifyUserToken(req.headers);
+```
+
+### Available Resources
+```typescript
+// Import separately for authentication
+import { verifyUserToken } from '@whop/api';
+
+// Use whop instance for API calls
+whop.experiences    // getExperience({ experienceId })
+whop.users          // getUser({ userId })
+whop.access         // checkIfUserHasAccessToExperience({ experienceId, userId })
+whop.payments       // createCheckoutSession({ planId }), listReceiptsForCompany({ companyId, filter })
+whop.companies      // listMembers({ companyId, filters })
+```
+
+**Common Methods:**
+- `verifyUserToken(req.headers)` - **Import separately** - Verify and extract userId from request
+- `whop.experiences.getExperience({ experienceId })` - Get experience details
+- `whop.users.getUser({ userId })` - Get user information
+- `whop.access.checkIfUserHasAccessToExperience({ experienceId, userId })` - Check user access
+- `whop.payments.createCheckoutSession({ planId })` - Create checkout session
+- `whop.payments.listReceiptsForCompany({ companyId, filter })` - List receipts
+- `whop.companies.listMembers({ companyId, filters })` - List company members
+
+## Common API Methods: Real-World Examples
+
+### `verifyUserToken(headers)`
+
+Verify user authentication from request headers.
+
+**Example:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  // Use userId for further operations
+  const user = await whop.users.getUser({ userId });
+  return NextResponse.json(user);
+}
+```
+
+---
+
+### `whop.experiences.getExperience({ experienceId })`
+
+Retrieve a specific experience by ID.
+
+**Parameters:**
+- `experienceId` (string) - The experience ID (e.g., `"exp_xxxxxxxxxxxxxx"`)
+
+**Example:**
+```typescript
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxxxxxxxxxxxxx" 
+});
+
+console.log(experience.name); // App instance name
+console.log(experience.company.id); // Company ID
+console.log(experience.company.title); // Company name
+```
+
+---
+
+### `whop.users.getUser({ userId })`
+
+Get user information.
+
+**Example:**
+```typescript
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
+```
+
+---
+
+### `whop.access.checkIfUserHasAccessToExperience({ experienceId, userId })`
+
+Check if user has access to an experience.
+
+**Example:**
+```typescript
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
+});
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
+```
+
+---
+
+### `whop.payments.createCheckoutSession({ planId })`
+
+Create a checkout session for a plan.
+
+**Example:**
+```typescript
+const checkoutSession = await whop.payments.createCheckoutSession({
+  planId: "plan_xxxxxxxxxxxxxx"
+});
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ 
+  planId: planId, 
+  id: checkoutSession.id 
+});
+
+// Or redirect to checkout URL
+window.open(`https://whop.com/checkout/${checkoutSession.id}`, "_blank");
+```
+
+---
+
+### `whop.payments.listReceiptsForCompany({ companyId, filter })`
+
+List receipts for a company with filters.
+
+**Example:**
+```typescript
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filter: {
+    accessPassIds: ["prod_xxx", "prod_yyy"],
+    statuses: ['succeeded'],
+  },
+});
+
+const nodes = receipts?.receipts?.nodes ?? [];
+// Filter for specific user
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
+```
+
+---
+
+### `whop.companies.listMembers({ companyId, filters })`
+
+List members of a company with filters.
+
+**Example:**
+```typescript
+const members = await whop.companies.listMembers({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filters: {
+    accessPassIds: ["prod_xxx"],
+  },
+});
+
+const nodes = members?.members?.nodes ?? [];
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Wrong: Not using object parameters
+```typescript
+// Wrong - positional arguments
+await whop.experiences.getExperience("exp_xxx");
+
+// Wrong - not checking for null
+const name = receipts.receipts.nodes[0].member.user.name; // Can crash!
+```
+
+### ✅ Correct: Using object parameters
+```typescript
+await whop.companies.listMembers({
+  companyId: "biz_123",   // Object-based params
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
+});
+```
+
+### ❌ Wrong: Using limited SDK
+```typescript
+import Whop from '@whop/sdk';  // Missing some functionality!
+const client = new Whop({ ... });
+```
+
+### ✅ Correct: Using WhopServerSdk
+```typescript
+import { WhopServerSdk } from '@whop/api';  // Recommended
+
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
+});
+```
+
+### ❌ Wrong: Not filtering user-specific data
+```typescript
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+// Returns ALL company receipts - privacy issue!
+return receipts;
+```
+
+### ✅ Correct: Filter to authenticated user only
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return userReceipts; // Only current user's data
+```
+
+## Error Handling
+
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function POST(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const checkoutSession = await whop.payments.createCheckoutSession({
+      planId: "plan_xxxxxxxxxxxxxx"
+    });
+
+    if (!checkoutSession) {
+      return NextResponse.json(
+        { error: 'Failed to create checkout session' }, 
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      planId: "plan_xxxxxxxxxxxxxx",
+      checkoutId: checkoutSession.id,
+    });
+  } catch (error) {
+    console.error('Failed to create checkout session:', error);
+    return NextResponse.json(
+      { error: 'Failed to create checkout session' }, 
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Quick Reference
+
+### Authentication Flow
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function GET(req: NextRequest) {
+  // 1. Verify user token (imported separately)
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 2. Fetch user data
+  const user = await whop.users.getUser({ userId });
+  
+  return NextResponse.json({ user });
+}
+```
+
+### Checkout Flow
+```typescript
+// 1. Create checkout session
+const checkoutSession = await whop.payments.createCheckoutSession({
+  planId: "plan_xxxxxxxxxxxxxx"
+});
+
+// 2. Open checkout in-app
+iframeSdk.inAppPurchase({ 
+  planId: "plan_xxx", 
+  id: checkoutSession.id 
+});
+
+// Or open in new tab
+window.open(`https://whop.com/checkout/${checkoutSession.id}`, "_blank");
+```
+
+### Receipts & Revenue Flow
+```typescript
+// 1. Fetch receipts
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_one_time", "prod_subscription"],
+    statuses: ['succeeded'],
+  },
+});
+
+// 2. Filter to current user only (security!)
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+
+// 3. Calculate revenue
+const total = userReceipts.reduce((sum, r) => sum + (r.finalAmount ?? 0), 0);
+```
+
+### Member Management
+```typescript
+// List members with filters
+const members = await whop.companies.listMembers({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filters: {
+    accessPassIds: ["prod_subscription"],
+  },
+});
+
+// Access member data
+const nodes = members?.members?.nodes ?? [];
+const memberId = nodes[0]?.id; // Use for management URL
+const manageUrl = `https://whop.com/billing/manage/${memberId}`;
+```
+
+## Support & Resources
+
+- **Official Docs**: https://docs.whop.com/
+- **API Reference**: https://docs.whop.com/api-reference/
+- **API Package**: https://www.npmjs.com/package/@whop/api
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
+
+## Security Best Practices
+
+### 🔒 Critical: Always Filter User Data
+
+**❌ NEVER return all company data:**
+```typescript
+// DANGEROUS - Returns ALL users' receipts!
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+return NextResponse.json(receipts?.receipts?.nodes);
+```
+
+**✅ ALWAYS filter to current user:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+// SAFE - Only returns current user's receipts
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return NextResponse.json(userReceipts);
+```
+
+### Key Security Rules
+1. **Always call `whop.verifyUserToken(req.headers)` first** in protected routes
+2. **Filter company-wide API responses** to only include current user's data
+3. **Return minimal data** - only what the user needs to see
+4. **Validate user authorization** before showing member IDs or other identifiers
+5. **Use type guards** to safely access nested properties
+
+## Summary for LLM Agents
+
+1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
+2. **INITIALIZE** with `appId`, `appApiKey`, `onBehalfOfUserId`, and `companyId`
+3. **USE** object-based parameters: `{ experienceId }` not positional args
+4. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected API routes
+5. **FILTER** sensitive data to current user only - NEVER return all company data
+6. **CHECK** for null/undefined when accessing nested properties from API responses
+7. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
+8. **USE** `?.` optional chaining for safe property access
+9. **TEST** thoroughly before deploying
+
+When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
+
+# Whop API - Instructions for LLM Agents
+
+## Critical: Use ONLY the Recommended API Package
+
+**Package**: `@whop/api` with `WhopServerSdk`  
+**Documentation**: https://docs.whop.com/apps/api/getting-started  
+**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
+
+**Important Note:** Official docs may reference `@whop/sdk`, but use `WhopServerSdk` from `@whop/api` instead. The API structure uses:
+- `WhopServerSdk()` function (not `new WhopAPI()` class)
+- Object parameters: `{ experienceId }` (not positional args)
+- CamelCase properties: `companyId`, `experienceId`, `userId`
+- Nested responses requiring optional chaining: `receipts?.receipts?.nodes`
+
+### DO Use
+- `@whop/api` package with `WhopServerSdk`
+- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
+- Optional chaining (`?.`) for nested API responses
+- Official documentation at https://docs.whop.com/
+
+### DO NOT Use
+- ⚠️ `@whop/sdk` package (newer but missing some functionality)
+- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
+- ❌ GraphQL SDK (deprecated)
+- ❌ API v2 (deprecated)
+- ❌ API v5 (deprecated)
+- ❌ Internal GraphQL API (not public, unsupported)
+- ❌ Positional arguments (use object parameters)
+
+## What the REST API Can Do
+
+### ✅ Supported Operations
+
+#### App Development
+- Create, update, retrieve, and list apps
+- Create and manage app builds for iOS, Android, Web
+- Promote builds to production
+- Configure app URLs (production, dev, preview)
+- Set app permissions and OAuth scopes
+
+#### Products & Monetization
+- Create, update, delete, and list products (access passes)
+- Create, update, delete, and list plans (checkout links)
+- Get checkout URLs via `direct_link` field on plans
+- Configure pricing (one-time, recurring, expiring)
+- Set up payment methods (card, PayPal, ACH, etc.)
+- Configure trials and discounts
+
+#### Payment Processing
+- List and retrieve payments
+- Refund, retry, and void payments
+- Create and manage invoices
+- Process transfers to creators
+- Access ledger account balances
+- Configure checkout settings
+
+#### Company & Member Management
+- Retrieve company information
+- List and retrieve members
+- List and manage memberships (cancel, pause, resume)
+- Manage authorized users (admins)
+- Approve/deny waitlist entries
+- Create and track shipments
+
+#### Content & Communication
+- Retrieve user information and check access
+- Create, update, and manage experiences (app instances)
+- Attach/detach experiences to products
+- Create and list forum posts
+- Update forum settings
+- Send direct messages (DMs)
+- Create and manage chat channels
+- Create and manage support channels
+- Add reactions to messages
+- Track course lesson interactions
+
+#### Special Features
+- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
+- **Webhooks**: Invoice events (created, paid, past due, voided)
+- **Pagination**: Automatic via async iterators
+- **Access Control**: Check if users have access to products
+
+### ❌ What the REST API Cannot Do
+
+The REST API does **NOT** support:
+- Advanced GraphQL-style queries with custom field selection
+- Nested mutations in a single request
+- Direct database schema access
+- Creating companies (companies must exist first)
+- Complex filtering beyond what's exposed in query parameters
+- Batch operations (must make individual calls)
+- Real-time subscriptions (use webhooks instead)
+- Custom SQL-like queries
+
+## Finding Documentation
+
+### Primary Sources (Always Check First)
+
+1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
+   - Complete API reference with examples
+   - All endpoints documented
+   - Request/response schemas
+   
+2. **SDK Documentation**: https://docs.whop.com/api-reference/
+   - Individual endpoint pages
+   - Code examples in JavaScript
+   - Query parameters and response formats
+
+3. **App Development Guide**: https://docs.whop.com/apps
+   - High-level concepts
+   - OAuth and authentication flows
+   - Webhooks and event handling
+
+### When Documentation is Insufficient
+
+If the official docs don't have the information you need:
+
+#### Use Exa MCP for Additional Context
+
+```typescript
+// Example: Search for Whop SDK usage patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop API @whop/api create product with plans example"
+})
+
+// Example: Find implementation details
+mcp_exa_get_code_context_exa({
+  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
+})
+
+// Example: Find error handling patterns
+mcp_exa_get_code_context_exa({
+  query: "Whop API @whop/api error handling payment refund retry"
+})
+```
+
+#### When to Use Exa MCP
+- Official docs don't cover your specific use case
+- Need real-world code examples
+- Looking for error handling patterns
+- Want to see how others have implemented features
+- Need to understand undocumented behavior
+- Troubleshooting specific errors
+
+#### What to Search For
+- Package name: `@whop/api` and `WhopServerSdk`
+- Specific methods: `whop.experiences.getExperience`, `whop.payments.createCheckoutSession`
+- Error messages you're encountering
+- Feature combinations: "Whop API WhopServerSdk checkout receipts"
+- Integration patterns: "Whop API verifyUserToken authentication"
+
+## SDK Structure
+
+### Client Initialization
+```typescript
+import { WhopServerSdk } from '@whop/api';
+
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
+});
+```
+
+### Resource Methods Pattern
+All resources follow object-based parameter patterns:
+
+```typescript
+// Get single resource
+const experience = await whop.experiences.getExperience({ experienceId });
+
+// Get user
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
+});
+
+// List resources with filters
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ['prod_xxx'],
+  },
+});
+
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ planId });
+
+// List receipts
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ['prod_xxx'],
+    statuses: ['succeeded'],
+  },
+});
+
+// Verify user token (imported separately)
+import { verifyUserToken } from '@whop/api';
+const { userId } = await verifyUserToken(req.headers);
+```
+
+### Available Resources
+```typescript
+// Import separately for authentication
+import { verifyUserToken } from '@whop/api';
+
+// Use whop instance for API calls
+whop.experiences    // getExperience({ experienceId })
+whop.users          // getUser({ userId })
+whop.access         // checkIfUserHasAccessToExperience({ experienceId, userId })
+whop.payments       // createCheckoutSession({ planId }), listReceiptsForCompany({ companyId, filter })
+whop.companies      // listMembers({ companyId, filters })
+```
+
+**Common Methods:**
+- `verifyUserToken(req.headers)` - **Import separately** - Verify and extract userId from request
+- `whop.experiences.getExperience({ experienceId })` - Get experience details
+- `whop.users.getUser({ userId })` - Get user information
+- `whop.access.checkIfUserHasAccessToExperience({ experienceId, userId })` - Check user access
+- `whop.payments.createCheckoutSession({ planId })` - Create checkout session
+- `whop.payments.listReceiptsForCompany({ companyId, filter })` - List receipts
+- `whop.companies.listMembers({ companyId, filters })` - List company members
+
+## Common API Methods: Real-World Examples
+
+### `verifyUserToken(headers)`
+
+Verify user authentication from request headers.
+
+**Example:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  // Use userId for further operations
+  const user = await whop.users.getUser({ userId });
+  return NextResponse.json(user);
+}
+```
+
+---
+
+### `whop.experiences.getExperience({ experienceId })`
+
+Retrieve a specific experience by ID.
+
+**Parameters:**
+- `experienceId` (string) - The experience ID (e.g., `"exp_xxxxxxxxxxxxxx"`)
+
+**Example:**
+```typescript
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxxxxxxxxxxxxx" 
+});
+
+console.log(experience.name); // App instance name
+console.log(experience.company.id); // Company ID
+console.log(experience.company.title); // Company name
+```
+
+---
+
+### `whop.users.getUser({ userId })`
+
+Get user information.
+
+**Example:**
+```typescript
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
+```
+
+---
+
+### `whop.access.checkIfUserHasAccessToExperience({ experienceId, userId })`
+
+Check if user has access to an experience.
+
+**Example:**
+```typescript
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
+});
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
+```
+
+---
+
+### `whop.payments.createCheckoutSession({ planId })`
+
+Create a checkout session for a plan.
+
+**Example:**
+```typescript
+const checkoutSession = await whop.payments.createCheckoutSession({
+  planId: "plan_xxxxxxxxxxxxxx"
+});
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ 
+  planId: planId, 
+  id: checkoutSession.id 
+});
+
+// Or redirect to checkout URL
+window.open(`https://whop.com/checkout/${checkoutSession.id}`, "_blank");
+```
+
+---
+
+### `whop.payments.listReceiptsForCompany({ companyId, filter })`
+
+List receipts for a company with filters.
+
+**Example:**
+```typescript
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filter: {
+    accessPassIds: ["prod_xxx", "prod_yyy"],
+    statuses: ['succeeded'],
+  },
+});
+
+const nodes = receipts?.receipts?.nodes ?? [];
+// Filter for specific user
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
+```
+
+---
+
+### `whop.companies.listMembers({ companyId, filters })`
+
+List members of a company with filters.
+
+**Example:**
+```typescript
+const members = await whop.companies.listMembers({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filters: {
+    accessPassIds: ["prod_xxx"],
+  },
+});
+
+const nodes = members?.members?.nodes ?? [];
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Wrong: Not using object parameters
+```typescript
+// Wrong - positional arguments
+await whop.experiences.getExperience("exp_xxx");
+
+// Wrong - not checking for null
+const name = receipts.receipts.nodes[0].member.user.name; // Can crash!
+```
+
+### ✅ Correct: Using object parameters
+```typescript
+await whop.companies.listMembers({
+  companyId: "biz_123",   // Object-based params
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
+});
+```
+
+### ❌ Wrong: Using limited SDK
+```typescript
+import Whop from '@whop/sdk';  // Missing some functionality!
+const client = new Whop({ ... });
+```
+
+### ✅ Correct: Using WhopServerSdk
+```typescript
+import { WhopServerSdk } from '@whop/api';  // Recommended
+
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
+});
+```
+
+### ❌ Wrong: Not filtering user-specific data
+```typescript
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+// Returns ALL company receipts - privacy issue!
+return receipts;
+```
+
+### ✅ Correct: Filter to authenticated user only
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return userReceipts; // Only current user's data
+```
+
+## Error Handling
+
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function POST(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const checkoutSession = await whop.payments.createCheckoutSession({
+      planId: "plan_xxxxxxxxxxxxxx"
+    });
+
+    if (!checkoutSession) {
+      return NextResponse.json(
+        { error: 'Failed to create checkout session' }, 
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      planId: "plan_xxxxxxxxxxxxxx",
+      checkoutId: checkoutSession.id,
+    });
+  } catch (error) {
+    console.error('Failed to create checkout session:', error);
+    return NextResponse.json(
+      { error: 'Failed to create checkout session' }, 
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Quick Reference
+
+### Authentication Flow
+```typescript
+import { verifyUserToken } from '@whop/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { whop } from '~/lib/whop';
+
+export async function GET(req: NextRequest) {
+  // 1. Verify user token (imported separately)
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 2. Fetch user data
+  const user = await whop.users.getUser({ userId });
+  
+  return NextResponse.json({ user });
+}
+```
+
+### Checkout Flow
+```typescript
+// 1. Create checkout session
+const checkoutSession = await whop.payments.createCheckoutSession({
+  planId: "plan_xxxxxxxxxxxxxx"
+});
+
+// 2. Open checkout in-app
+iframeSdk.inAppPurchase({ 
+  planId: "plan_xxx", 
+  id: checkoutSession.id 
+});
+
+// Or open in new tab
+window.open(`https://whop.com/checkout/${checkoutSession.id}`, "_blank");
+```
+
+### Receipts & Revenue Flow
+```typescript
+// 1. Fetch receipts
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_one_time", "prod_subscription"],
+    statuses: ['succeeded'],
+  },
+});
+
+// 2. Filter to current user only (security!)
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+
+// 3. Calculate revenue
+const total = userReceipts.reduce((sum, r) => sum + (r.finalAmount ?? 0), 0);
+```
+
+### Member Management
+```typescript
+// List members with filters
+const members = await whop.companies.listMembers({
+  companyId: "biz_xxxxxxxxxxxxxx",
+  filters: {
+    accessPassIds: ["prod_subscription"],
+  },
+});
+
+// Access member data
+const nodes = members?.members?.nodes ?? [];
+const memberId = nodes[0]?.id; // Use for management URL
+const manageUrl = `https://whop.com/billing/manage/${memberId}`;
+```
+
+## Support & Resources
+
+- **Official Docs**: https://docs.whop.com/
+- **API Reference**: https://docs.whop.com/api-reference/
+- **API Package**: https://www.npmjs.com/package/@whop/api
+- **Getting Started**: https://docs.whop.com/apps/api/getting-started
+- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
+
+## Security Best Practices
+
+### 🔒 Critical: Always Filter User Data
+
+**❌ NEVER return all company data:**
+```typescript
+// DANGEROUS - Returns ALL users' receipts!
+const receipts = await whop.payments.listReceiptsForCompany({ companyId });
+return NextResponse.json(receipts?.receipts?.nodes);
+```
+
+**✅ ALWAYS filter to current user:**
+```typescript
+import { verifyUserToken } from '@whop/api';
+
+// SAFE - Only returns current user's receipts
+const { userId } = await verifyUserToken(req.headers);
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
+return NextResponse.json(userReceipts);
+```
+
+### Key Security Rules
+1. **Always call `whop.verifyUserToken(req.headers)` first** in protected routes
+2. **Filter company-wide API responses** to only include current user's data
+3. **Return minimal data** - only what the user needs to see
+4. **Validate user authorization** before showing member IDs or other identifiers
+5. **Use type guards** to safely access nested properties
+
+## Summary for LLM Agents
+
+1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
+2. **INITIALIZE** with `appId`, `appApiKey`, `onBehalfOfUserId`, and `companyId`
+3. **USE** object-based parameters: `{ experienceId }` not positional args
+4. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected API routes
+5. **FILTER** sensitive data to current user only - NEVER return all company data
+6. **CHECK** for null/undefined when accessing nested properties from API responses
+7. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
+8. **USE** `?.` optional chaining for safe property access
+9. **TEST** thoroughly before deploying
+
+When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
+
+---
+description: How to list members of a Whop company/community.
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
 alwaysApply: false
 ---
 
-Default to using Bun instead of Node.js.
+# Listing Members in Whop Communities
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+## Important: Filter Out App Agents by Default
 
-## APIs
+**When a developer requests to list members of their Whop community, you MUST filter out app agents by default, unless they explicitly ask to include them.**
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## What Are App Agents?
 
-## Testing
+Each Whop app has an **agent user** automatically attached to it. When an app is installed on a company:
+- An agent member is automatically created
+- The agent appears in the company's member list
+- The agent has admin-level access to the company
+- The agent is used for automated actions (DMs, notifications, etc.)
 
-Use `bun test` to run tests.
+## Problem
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+When you call `whop.companies.listMembers()`, the API returns **all members including app agents**. This means:
+- A company with 100 apps installed will have 100+ agent members
+- The list becomes cluttered with non-human members
+- Developers typically only want to see real users
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+## Identifying App Agents
+
+App agents have these identifying features:
+
+### 1. **Email is null or empty** (Most Reliable)
+```typescript
+member.user.email === null
+member.user.email === ""
+member.user.email?.trim() === ""
 ```
 
-## Frontend
+### 2. Username Pattern
+```
+app-[timestamp]s-agent
+// Examples:
+// app-1761020340606s-agent
+// app-1761163136087s-agent
+```
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+### 3. Name Pattern
+```
+app-[timestamp]'s agent
+// Examples:
+// app-1761020340606's agent
+// app-1761163136087's agent
+```
 
-Server:
+### 4. Access Level
+App agents typically have `accessLevel: "admin"`
 
-```ts#index.ts
-import index from "./index.html"
+### 5. Other Characteristics
+- `totalSpent: 0` (they never make purchases)
+- Generated profile pictures from UI Avatars
+- Created at the same time as app installation
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
+## How to Filter Out App Agents
+
+### ✅ Recommended Method: Check Email
+
+```typescript
+// Filter out app agents (they have null or empty email addresses)
+const realMembers = members.filter(
+  (member) => member?.user?.email && member?.user?.email.trim() !== '',
+)
+```
+
+This is the most reliable method because:
+- App agents systematically have `null` or empty emails
+- Real users always have valid email addresses
+- It's a structural difference, not dependent on naming conventions
+
+### Alternative Methods
+
+```typescript
+// Method 2: Username pattern matching
+const realMembers = members.filter(
+  (member) => !member?.user?.username?.match(/^app-\d+s?-agent$/),
+)
+
+// Method 3: Combination approach
+const realMembers = members.filter((member) => {
+  const hasEmail = member?.user?.email && member.user.email.trim() !== ''
+  const isNotAgentPattern = !member?.user?.username?.match(/^app-\d+s?-agent$/)
+  return hasEmail && isNotAgentPattern
+})
+```
+
+## Complete Example
+
+```typescript
+import { verifyUserToken } from '@whop/api'
+import { NextRequest, NextResponse } from 'next/server'
+import { whop } from '~/lib/whop'
+
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers)
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-})
-```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+  const companyId = process.env.NEXT_PUBLIC_WHOP_COMPANY_ID
+  const membersResponse = await whop.companies.listMembers({
+    companyId,
+    filters: {},
+  })
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
+  const members = membersResponse?.members?.nodes ?? []
 
-With the following `frontend.tsx`:
+  // Filter out app agents (they have null or empty email addresses)
+  const realMembers = members.filter(
+    (member) => member?.user?.email && member?.user?.email.trim() !== '',
+  )
 
-```tsx#frontend.tsx
-import React from "react";
+  const transformedMembers = realMembers.map((member) => ({
+    id: member?.id ?? '',
+    user: {
+      id: member?.user?.id ?? '',
+      username: member?.user?.username ?? '',
+      name: member?.user?.name ?? '',
+      email: member?.user?.email ?? '',
+      profilePicUrl: member?.imageSrcset?.original ?? null,
+    },
+    status: member?.status ?? 'unknown',
+    createdAt: member?.createdAt ?? 0,
+    joinedAt: member?.joinedAt ?? 0,
+  }))
 
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
-
-
-# Whop API - Instructions for LLM Agents
-
-## Critical: Use ONLY the Recommended API Package
-
-**Package**: `@whop/api`  
-**Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
-
-### DO Use
-- `@whop/api` package with `WhopServerSdk`
-- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
-- Optional chaining (`?.`) for nested API responses
-- Official documentation at https://docs.whop.com/
-
-### DO NOT Use
-- ⚠️ `@whop/sdk` package (newer but missing some functionality)
-- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
-- ❌ GraphQL SDK (deprecated)
-- ❌ API v2 (deprecated)
-- ❌ API v5 (deprecated)
-- ❌ Internal GraphQL API (not public, unsupported)
-- ❌ Positional arguments (use object parameters)
-
-## What the REST API Can Do
-
-### ✅ Supported Operations
-
-#### App Development
-- Create, update, retrieve, and list apps
-- Create and manage app builds for iOS, Android, Web
-- Promote builds to production
-- Configure app URLs (production, dev, preview)
-- Set app permissions and OAuth scopes
-
-#### Products & Monetization
-- Create, update, delete, and list products (access passes)
-- Create, update, delete, and list plans (checkout links)
-- Get checkout URLs via `direct_link` field on plans
-- Configure pricing (one-time, recurring, expiring)
-- Set up payment methods (card, PayPal, ACH, etc.)
-- Configure trials and discounts
-
-#### Payment Processing
-- List and retrieve payments
-- Refund, retry, and void payments
-- Create and manage invoices
-- Process transfers to creators
-- Access ledger account balances
-- Configure checkout settings
-
-#### Company & Member Management
-- Retrieve company information
-- List and retrieve members
-- List and manage memberships (cancel, pause, resume)
-- Manage authorized users (admins)
-- Approve/deny waitlist entries
-- Create and track shipments
-
-#### Content & Communication
-- Retrieve user information and check access
-- Create, update, and manage experiences (app instances)
-- Attach/detach experiences to products
-- Create and list forum posts
-- Update forum settings
-- Send direct messages (DMs)
-- Create and manage chat channels
-- Create and manage support channels
-- Add reactions to messages
-- Track course lesson interactions
-
-#### Special Features
-- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
-- **Webhooks**: Invoice events (created, paid, past due, voided)
-- **Pagination**: Automatic via async iterators
-- **Access Control**: Check if users have access to products
-
-### ❌ What the REST API Cannot Do
-
-The REST API does **NOT** support:
-- Advanced GraphQL-style queries with custom field selection
-- Nested mutations in a single request
-- Direct database schema access
-- Creating companies (companies must exist first)
-- Complex filtering beyond what's exposed in query parameters
-- Batch operations (must make individual calls)
-- Real-time subscriptions (use webhooks instead)
-- Custom SQL-like queries
-
-## Finding Documentation
-
-### Primary Sources (Always Check First)
-
-1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
-   - Complete API reference with examples
-   - All endpoints documented
-   - Request/response schemas
-   
-2. **SDK Documentation**: https://docs.whop.com/api-reference/
-   - Individual endpoint pages
-   - Code examples in JavaScript
-   - Query parameters and response formats
-
-3. **App Development Guide**: https://docs.whop.com/apps
-   - High-level concepts
-   - OAuth and authentication flows
-   - Webhooks and event handling
-
-### When Documentation is Insufficient
-
-If the official docs don't have the information you need:
-
-#### Use Exa MCP for Additional Context
-
-```typescript
-// Example: Search for Whop SDK usage patterns
-mcp_exa_get_code_context_exa({
-  query: "Whop API @whop/api create product with plans example"
-})
-
-// Example: Find implementation details
-mcp_exa_get_code_context_exa({
-  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
-})
-
-// Example: Find error handling patterns
-mcp_exa_get_code_context_exa({
-  query: "Whop API @whop/api error handling payment refund retry"
-})
-```
-
-#### When to Use Exa MCP
-- Official docs don't cover your specific use case
-- Need real-world code examples
-- Looking for error handling patterns
-- Want to see how others have implemented features
-- Need to understand undocumented behavior
-- Troubleshooting specific errors
-
-#### What to Search For
-- Package name: `@whop/api`
-- Specific methods: `client.products.create`, `client.plans.update`
-- Error messages you're encountering
-- Feature combinations: "Whop API create product with multiple plans"
-- Integration patterns: "Whop webhook invoice paid handle"
-
-## SDK Structure
-
-### Client Initialization
-```typescript
-import { WhopServerSdk } from '@whop/api';
-
-export const whop = WhopServerSdk({
-  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
-  appApiKey: process.env.WHOP_API_KEY,
-  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
-});
-```
-
-### Resource Methods Pattern
-All resources follow the same pattern:
-
-```typescript
-// List resources (returns async iterator)
-for await (const item of client.resource.list(params)) {
-  // Process items
-}
-
-// Create resource
-const created = await client.resource.create(data);
-
-// Retrieve resource
-const item = await client.resource.retrieve(id);
-
-// Update resource
-const updated = await client.resource.update(id, data);
-
-// Delete resource (where available)
-await client.resource.delete(id);
-```
-
-### Available Resources
-```typescript
-client.apps
-client.appBuilds
-client.products
-client.plans
-client.payments
-client.invoices
-client.transfers
-client.ledgerAccounts
-client.checkoutConfigurations
-client.companies
-client.members
-client.memberships
-client.entries
-client.shipments
-client.authorizedUsers
-client.users
-client.experiences
-client.forumPosts
-client.forums
-client.messages
-client.chatChannels
-client.supportChannels
-client.reactions
-client.courseLessonInteractions
-```
-
-## Common Mistakes to Avoid
-
-### ❌ Wrong: Using camelCase
-```typescript
-await client.products.create({
-  companyId: "biz_123",    // Wrong!
-  baseUrl: "https://..."   // Wrong!
-});
-```
-
-### ✅ Correct: Using snake_case
-```typescript
-await client.products.create({
-  company_id: "biz_123",   // Correct
-  base_url: "https://..."  // Correct
-});
-```
-
-### ❌ Wrong: Using limited SDK
-```typescript
-import Whop from '@whop/sdk';  // Missing some functionality!
-```
-
-### ✅ Correct: Using complete API package
-```typescript
-import { WhopAPI } from '@whop/api';  // Recommended
-```
-
-### ❌ Wrong: Manual pagination
-```typescript
-let cursor = null;
-while (true) {
-  const response = await fetch(`/api?after=${cursor}`);
-  // Manual handling...
+  return NextResponse.json({
+    members: transformedMembers,
+    totalCount: transformedMembers.length,
+  })
 }
 ```
 
-### ✅ Correct: Async iterator pagination
-```typescript
-for await (const item of client.products.list()) {
-  // SDK handles pagination automatically
-}
-```
+## When to Include App Agents
 
-## Error Handling
+Only include app agents if the developer **explicitly requests** them:
+- "list all members including agents"
+- "show me app agents"
+- "include app agent users"
 
+Otherwise, **always filter them out by default**.
+
+## Member Data Structure
+
+Real members have this structure:
 ```typescript
-try {
-  const plan = await client.plans.create({
-    product_id: "prod_123",
-    title: "Monthly Plan",
-    renewal_price: 29.99,
-    base_currency: "USD",
-    billing_period: 30
-  });
-} catch (error) {
-  if (error.statusCode === 422) {
-    console.error('Validation error:', error.message);
-  } else if (error.statusCode === 404) {
-    console.error('Product not found');
-  } else {
-    console.error('Unexpected error:', error);
+{
+  "__typename": "CompanyMember",
+  "accessLevel": "customer" | "admin",
+  "createdAt": 1761163666,
+  "id": "mber_xxxxx",
+  "imageSrcset": {
+    "__typename": "ImgSrcset",
+    "original": "https://img-v2-prod.whop.com/..."
+  },
+  "joinedAt": 1761163666,
+  "mrr": "$0.00",
+  "phone": null | string,
+  "status": "joined" | "active" | ...,
+  "totalSpent": 0,
+  "updatedAtMs": "1761163670271",
+  "usdTotalSpent": "$0.00",
+  "user": {
+    "__typename": "CompanyMemberUser",
+    "email": "user@example.com",  // ✓ Real users have emails
+    "id": "user_xxxxx",
+    "name": "John Doe",
+    "username": "johndoe"
   }
 }
 ```
 
-## Quick Reference
-
-### Product Creation Flow
+App agents have the same structure but:
 ```typescript
-// 1. Create product
-const product = await client.products.create({
-  title: "My Product",
-  company_id: "biz_123",
-  visibility: "visible"
-});
-
-// 2. Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30
-});
-
-// 3. Share checkout link
-console.log(plan.direct_link);
-```
-
-### App Creation Flow
-```typescript
-// 1. Create app
-const app = await client.apps.create({
-  name: "My App",
-  base_url: "https://myapp.com",
-  company_id: "biz_123"
-});
-
-// 2. Update app configuration
-await client.apps.update(app.id, {
-  base_dev_url: "http://localhost:3000",
-  description: "My app description"
-});
-```
-
-## Support & Resources
-
-- **Official Docs**: https://docs.whop.com/
-- **API Reference**: https://docs.whop.com/api-reference/
-- **API Package**: https://www.npmjs.com/package/@whop/api
-- **Getting Started**: https://docs.whop.com/apps/api/getting-started
-- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
-
-## Security Best Practices
-
-### 🔒 Critical: Always Filter User Data
-
-**❌ NEVER return all company data:**
-```typescript
-// DANGEROUS - Returns ALL users' receipts!
-const receipts = await whop.payments.listReceiptsForCompany({ companyId });
-return NextResponse.json(receipts?.receipts?.nodes);
-```
-
-**✅ ALWAYS filter to current user:**
-```typescript
-import { verifyUserToken } from '@whop/api';
-
-// SAFE - Only returns current user's receipts
-const { userId } = await verifyUserToken(req.headers);
-const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
-const userReceipts = receipts?.receipts?.nodes?.filter(
-  (r) => r?.member?.user?.id === userId
-);
-return NextResponse.json(userReceipts);
+"user": {
+  "email": null,  // ✗ Agents have null emails
+  "name": "app-1761163344457's agent",
+  "username": "app-1761163344457s-agent"
+}
 ```
 
 ## Summary for LLM Agents
 
-1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
-2. **USE** object parameters with camelCase - `{ companyId }`, `{ experienceId }`
-3. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected routes
-4. **FILTER** company-wide data to current user only - NEVER return all data
-5. **USE** `?.` optional chaining for nested API responses
-6. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
-7. **CHECK** official docs first: https://docs.whop.com/
-8. **TEST** thoroughly before deploying
-
-When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
-
-# Whop API - Instructions for LLM Agents
-
-## Critical: Use ONLY the Recommended API Package
-
-**Package**: `@whop/api`  
-**Documentation**: https://docs.whop.com/apps/api/getting-started  
-**Status**: ✅ Recommended - contains full functionality including features missing in newer SDK
-
-### DO Use
-- `@whop/api` package with `WhopServerSdk`
-- Object-based parameters with camelCase (`companyId`, `experienceId`, `userId`)
-- Optional chaining (`?.`) for nested API responses
-- Official documentation at https://docs.whop.com/
-
-### DO NOT Use
-- ⚠️ `@whop/sdk` package (newer but missing some functionality)
-- ❌ `WhopAPI` class (use `WhopServerSdk` instead)
-- ❌ GraphQL SDK (deprecated)
-- ❌ API v2 (deprecated)
-- ❌ API v5 (deprecated)
-- ❌ Internal GraphQL API (not public, unsupported)
-- ❌ Positional arguments (use object parameters)
-
-## What the REST API Can Do
-
-### ✅ Supported Operations
-
-#### App Development
-- Create, update, retrieve, and list apps
-- Create and manage app builds for iOS, Android, Web
-- Promote builds to production
-- Configure app URLs (production, dev, preview)
-- Set app permissions and OAuth scopes
-
-#### Products & Monetization
-- Create, update, delete, and list products (access passes)
-- Create, update, delete, and list plans (checkout links)
-- Get checkout URLs via `direct_link` field on plans
-- Configure pricing (one-time, recurring, expiring)
-- Set up payment methods (card, PayPal, ACH, etc.)
-- Configure trials and discounts
-
-#### Payment Processing
-- List and retrieve payments
-- Refund, retry, and void payments
-- Create and manage invoices
-- Process transfers to creators
-- Access ledger account balances
-- Configure checkout settings
-
-#### Company & Member Management
-- Retrieve company information
-- List and retrieve members
-- List and manage memberships (cancel, pause, resume)
-- Manage authorized users (admins)
-- Approve/deny waitlist entries
-- Create and track shipments
-
-#### Content & Communication
-- Retrieve user information and check access
-- Create, update, and manage experiences (app instances)
-- Attach/detach experiences to products
-- Create and list forum posts
-- Update forum settings
-- Send direct messages (DMs)
-- Create and manage chat channels
-- Create and manage support channels
-- Add reactions to messages
-- Track course lesson interactions
-
-#### Special Features
-- **Agent User**: Automate DMs using `NEXT_PUBLIC_WHOP_AGENT_USER_ID`
-- **Webhooks**: Invoice events (created, paid, past due, voided)
-- **Pagination**: Automatic via async iterators
-- **Access Control**: Check if users have access to products
-
-### ❌ What the REST API Cannot Do
-
-The REST API does **NOT** support:
-- Advanced GraphQL-style queries with custom field selection
-- Nested mutations in a single request
-- Direct database schema access
-- Creating companies (companies must exist first)
-- Complex filtering beyond what's exposed in query parameters
-- Batch operations (must make individual calls)
-- Real-time subscriptions (use webhooks instead)
-- Custom SQL-like queries
-
-## Finding Documentation
-
-### Primary Sources (Always Check First)
-
-1. **Official REST API Docs**: https://docs.whop.com/apps/api/getting-started
-   - Complete API reference with examples
-   - All endpoints documented
-   - Request/response schemas
-   
-2. **SDK Documentation**: https://docs.whop.com/api-reference/
-   - Individual endpoint pages
-   - Code examples in JavaScript
-   - Query parameters and response formats
-
-3. **App Development Guide**: https://docs.whop.com/apps
-   - High-level concepts
-   - OAuth and authentication flows
-   - Webhooks and event handling
-
-### When Documentation is Insufficient
-
-If the official docs don't have the information you need:
-
-#### Use Exa MCP for Additional Context
-
-```typescript
-// Example: Search for Whop SDK usage patterns
-mcp_exa_get_code_context_exa({
-  query: "Whop API @whop/api create product with plans example"
-})
-
-// Example: Find implementation details
-mcp_exa_get_code_context_exa({
-  query: "Whop API agent user send automated messages NEXT_PUBLIC_WHOP_AGENT_USER_ID"
-})
-
-// Example: Find error handling patterns
-mcp_exa_get_code_context_exa({
-  query: "Whop API @whop/api error handling payment refund retry"
-})
-```
-
-#### When to Use Exa MCP
-- Official docs don't cover your specific use case
-- Need real-world code examples
-- Looking for error handling patterns
-- Want to see how others have implemented features
-- Need to understand undocumented behavior
-- Troubleshooting specific errors
-
-#### What to Search For
-- Package name: `@whop/api`
-- Specific methods: `client.products.create`, `client.plans.update`
-- Error messages you're encountering
-- Feature combinations: "Whop API create product with multiple plans"
-- Integration patterns: "Whop webhook invoice paid handle"
-
-## SDK Structure
-
-### Client Initialization
-```typescript
-import { WhopServerSdk } from '@whop/api';
-
-export const whop = WhopServerSdk({
-  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
-  appApiKey: process.env.WHOP_API_KEY,
-  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
-});
-```
-
-### Resource Methods Pattern
-All resources follow the same pattern:
-
-```typescript
-// List resources (returns async iterator)
-for await (const item of client.resource.list(params)) {
-  // Process items
-}
-
-// Create resource
-const created = await client.resource.create(data);
-
-// Retrieve resource
-const item = await client.resource.retrieve(id);
-
-// Update resource
-const updated = await client.resource.update(id, data);
-
-// Delete resource (where available)
-await client.resource.delete(id);
-```
-
-### Available Resources
-```typescript
-client.apps
-client.appBuilds
-client.products
-client.plans
-client.payments
-client.invoices
-client.transfers
-client.ledgerAccounts
-client.checkoutConfigurations
-client.companies
-client.members
-client.memberships
-client.entries
-client.shipments
-client.authorizedUsers
-client.users
-client.experiences
-client.forumPosts
-client.forums
-client.messages
-client.chatChannels
-client.supportChannels
-client.reactions
-client.courseLessonInteractions
-```
-
-## Common Mistakes to Avoid
-
-### ❌ Wrong: Using camelCase
-```typescript
-await client.products.create({
-  companyId: "biz_123",    // Wrong!
-  baseUrl: "https://..."   // Wrong!
-});
-```
-
-### ✅ Correct: Using snake_case
-```typescript
-await client.products.create({
-  company_id: "biz_123",   // Correct
-  base_url: "https://..."  // Correct
-});
-```
-
-### ❌ Wrong: Using limited SDK
-```typescript
-import Whop from '@whop/sdk';  // Missing some functionality!
-```
-
-### ✅ Correct: Using complete API package
-```typescript
-import { WhopAPI } from '@whop/api';  // Recommended
-```
-
-### ❌ Wrong: Manual pagination
-```typescript
-let cursor = null;
-while (true) {
-  const response = await fetch(`/api?after=${cursor}`);
-  // Manual handling...
-}
-```
-
-### ✅ Correct: Async iterator pagination
-```typescript
-for await (const item of client.products.list()) {
-  // SDK handles pagination automatically
-}
-```
-
-## Error Handling
-
-```typescript
-try {
-  const plan = await client.plans.create({
-    product_id: "prod_123",
-    title: "Monthly Plan",
-    renewal_price: 29.99,
-    base_currency: "USD",
-    billing_period: 30
-  });
-} catch (error) {
-  if (error.statusCode === 422) {
-    console.error('Validation error:', error.message);
-  } else if (error.statusCode === 404) {
-    console.error('Product not found');
-  } else {
-    console.error('Unexpected error:', error);
-  }
-}
-```
-
-## Quick Reference
-
-### Product Creation Flow
-```typescript
-// 1. Create product
-const product = await client.products.create({
-  title: "My Product",
-  company_id: "biz_123",
-  visibility: "visible"
-});
-
-// 2. Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30
-});
-
-// 3. Share checkout link
-console.log(plan.direct_link);
-```
-
-### App Creation Flow
-```typescript
-// 1. Create app
-const app = await client.apps.create({
-  name: "My App",
-  base_url: "https://myapp.com",
-  company_id: "biz_123"
-});
-
-// 2. Update app configuration
-await client.apps.update(app.id, {
-  base_dev_url: "http://localhost:3000",
-  description: "My app description"
-});
-```
-
-## Support & Resources
-
-- **Official Docs**: https://docs.whop.com/
-- **API Reference**: https://docs.whop.com/api-reference/
-- **API Package**: https://www.npmjs.com/package/@whop/api
-- **Getting Started**: https://docs.whop.com/apps/api/getting-started
-- **Permissions Guide**: https://docs.whop.com/apps/api/permissions
-
-## Security Best Practices
-
-### 🔒 Critical: Always Filter User Data
-
-**❌ NEVER return all company data:**
-```typescript
-// DANGEROUS - Returns ALL users' receipts!
-const receipts = await whop.payments.listReceiptsForCompany({ companyId });
-return NextResponse.json(receipts?.receipts?.nodes);
-```
-
-**✅ ALWAYS filter to current user:**
-```typescript
-import { verifyUserToken } from '@whop/api';
-
-// SAFE - Only returns current user's receipts
-const { userId } = await verifyUserToken(req.headers);
-const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
-const userReceipts = receipts?.receipts?.nodes?.filter(
-  (r) => r?.member?.user?.id === userId
-);
-return NextResponse.json(userReceipts);
-```
-
-## Summary for LLM Agents
-
-1. **ALWAYS** use `WhopServerSdk` from `@whop/api` - not `WhopAPI` or `@whop/sdk`
-2. **USE** object parameters with camelCase - `{ companyId }`, `{ experienceId }`
-3. **VERIFY** users with `verifyUserToken(req.headers)` (import from `@whop/api`) in ALL protected routes
-4. **FILTER** company-wide data to current user only - NEVER return all data
-5. **USE** `?.` optional chaining for nested API responses
-6. **HANDLE** errors with proper Next.js responses (401, 500, etc.)
-7. **CHECK** official docs first: https://docs.whop.com/
-8. **TEST** thoroughly before deploying
-
-When in doubt, consult the official documentation or use Exa MCP to find real-world examples and patterns.
-
+1. **ALWAYS filter out app agents by default** when listing members
+2. **Use email check** as the primary filtering method
+3. **Only include agents** if explicitly requested
+4. **Document** the filtering in comments for clarity
+5. **Return accurate counts** that reflect only real members
+
+---
+description: What is whop and how it works.
+alwaysApply: true
+---
 
 # Whop Platform Structure & API Guide
 
@@ -1027,92 +1644,112 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 ### Creating a Whop App
 
-1. **Create the app** under your company
+1. **Initialize the SDK** in your lib/whop.ts
    ```typescript
-   import { WhopAPI } from '@whop/api';
+   import { WhopServerSdk } from '@whop/api';
+   import { env } from '~/env';
    
-   const client = new WhopAPI({
-     appID: 'app_xxxxxxxxxxxxxx',
-     apiKey: process.env.WHOP_API_KEY,
-   });
-   
-   const app = await client.apps.create({
-     name: "My App",
-     base_url: "https://myapp.com",
-     company_id: "biz_123"
+   export const whop = WhopServerSdk({
+     appId: env.NEXT_PUBLIC_WHOP_APP_ID,
+     appApiKey: env.WHOP_API_KEY,
+     onBehalfOfUserId: env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+     companyId: env.NEXT_PUBLIC_WHOP_COMPANY_ID,
    });
    ```
 
-2. **Configure app settings**
+2. **Create API routes** to interact with Whop
    ```typescript
-   await client.apps.update(app.id, {
-     base_url: "https://myapp.com",
-     base_dev_url: "http://localhost:3000",
-     base_preview_url: "https://staging.myapp.com",
-     description: "My app description",
-     icon: "attachment_id_here"
-   });
+   // app/(whop-api)/api/experience/[experienceId]/route.ts
+   import { NextRequest, NextResponse } from 'next/server';
+   import { whop } from '~/lib/whop';
+   
+   export async function GET(
+     req: NextRequest,
+     { params }: { params: Promise<{ experienceId: string }> }
+   ) {
+     const { experienceId } = await params;
+     const experience = await whop.experiences.getExperience({ experienceId });
+     return NextResponse.json(experience);
+   }
    ```
 
-3. **Submit for review**
-   - Apps must be reviewed before appearing in the App Store
-   - Once approved, other creators can install your app
+3. **Authenticate users** in protected routes
+   ```typescript
+   import { verifyUserToken } from '@whop/api';
+   
+   const { userId } = await verifyUserToken(req.headers);
+   if (!userId) {
+     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+   }
+   ```
 
-4. **Handle installations**
-   - When installed, your app receives an experience ID
-   - Use webhooks to track installations/uninstallations
-   - Configure experience-specific settings
+4. **Handle user data safely**
+   - Always verify authentication first
+   - Filter company-wide data to current user only
+   - Use optional chaining for nested properties
+   - Return minimal data to avoid privacy leaks
 
 ### Paywalling Your App
 
-1. **Create an access pass** for your app features
+1. **Create checkout endpoint** for your plans
    ```typescript
-   const product = await client.products.create({
-     title: "Premium Features",
-     company_id: "biz_123",
-     description: "Access to premium features",
-     visibility: "visible"
-   });
+   // app/(whop-api)/api/checkout/subscription/route.ts
+   import { verifyUserToken } from '@whop/api';
+   
+   export async function POST(req: NextRequest) {
+     const { userId } = await verifyUserToken(req.headers);
+     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+     const checkoutSession = await whop.payments.createCheckoutSession({
+       planId: env.SUBSCRIPTION_PLAN_ID
+     });
+
+     return NextResponse.json({
+       planId: env.SUBSCRIPTION_PLAN_ID,
+       checkoutId: checkoutSession.id,
+     });
+   }
    ```
 
-2. **Create plans** (checkout links) with pricing
+2. **Check user access** to experiences
    ```typescript
-   const plan = await client.plans.create({
-     product_id: product.id,
-     title: "Monthly Subscription",
-     plan_type: "renewal",
-     renewal_price: 29.99,
-     base_currency: "USD",
-     billing_period: 30,
-     visibility: "visible"
+   const access = await whop.access.checkIfUserHasAccessToExperience({
+     experienceId,
+     userId
+   });
+   console.log(access.accessLevel); // "admin" | "member" | "no_access"
+   ```
+
+3. **List user's receipts** to check purchases
+   ```typescript
+   const receipts = await whop.payments.listReceiptsForCompany({
+     companyId,
+     filter: {
+       accessPassIds: [planId],
+       statuses: ['succeeded']
+     }
    });
    
-   console.log('Checkout link:', plan.direct_link);
+   const userReceipts = receipts?.receipts?.nodes?.filter(
+     (r) => r?.member?.user?.id === userId
+   );
    ```
 
-3. **Check user access** in your app code
+4. **Gate features** based on subscription status
    ```typescript
-   const hasAccess = await client.users.checkAccess(userId, {
-     product_id: product.id
-   });
+   const hasActiveSubscription = userReceipts.some(
+     (r) => r.subscriptionStatus === "active"
+   );
    ```
-
-4. **Gate features** based on membership status
 
 ### Using the Agent User
 
-Apps receive `NEXT_PUBLIC_WHOP_AGENT_USER_ID` environment variable:
-- Use this to send automated DMs
-  ```typescript
-  await client.messages.create({
-    user_id: client.agentUserId, // From NEXT_PUBLIC_WHOP_AGENT_USER_ID
-    recipient_id: "user_123",
-    text: "Welcome to our community!"
-  });
-  ```
-- Build chatbots and notification systems
-- Automate welcome messages, reminders, alerts
-- Respond to user actions programmatically
+The `WhopServerSdk` is initialized with `onBehalfOfUserId` for automated actions:
+- Set to `NEXT_PUBLIC_WHOP_AGENT_USER_ID` for bot actions
+- Used for sending automated messages
+- Enables chatbots and notification systems
+
+**Note:** The agent user is configured during SDK initialization, not per-request.
 
 ## Key API Patterns
 
@@ -1132,34 +1769,34 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Create product (access pass)
-const product = await client.products.create({
-  title: "Premium Membership",
-  company_id: "biz_123",
-  description: "Full access to all features",
-  visibility: "visible"
+// Verify user authentication (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
+
+// Get user info
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
 });
 
-// Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly Plan",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30,
-  visibility: "visible"
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ 
+  planId: "plan_xxx" 
 });
 
-// The checkout URL
-console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
+// The checkout ID for iframe SDK
+console.log(checkout.id); // Use with iframeSdk.inAppPurchase()
 ```
 
 ## Terminology Reference
@@ -1182,81 +1819,84 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 
 ## Common API Examples
 
-### List Products on a Company
+### Authentication in API Routes
 ```typescript
-const products = await client.products.list({
-  company_id: "biz_123"
-});
+import { verifyUserToken } from '@whop/api';
 
-for await (const product of products) {
-  console.log(product.id, product.title);
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Proceed with authenticated request
 }
 ```
 
-### List Plans for a Product
+### Get Experience Data
 ```typescript
-const plans = await client.plans.list({
-  product_id: "prod_xyz789"
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxx" 
 });
-
-for await (const plan of plans) {
-  console.log(plan.id, plan.direct_link);
-}
+console.log(experience.name, experience.company.title);
 ```
 
-### Update a Plan
+### Get User Data
 ```typescript
-await client.plans.update("plan_abc123", {
-  title: "Updated Monthly Plan",
-  renewal_price: 39.99,
-  visibility: "visible"
-});
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
 ```
 
-### List Members of a Company
+### Check User Access
 ```typescript
-const members = await client.members.list({
-  company_id: "biz_123"
+const access = await whop.access.checkIfUserHasAccessToExperience({
+  experienceId: "exp_xxx",
+  userId: "user_xxx"
 });
-
-for await (const member of members) {
-  console.log(member.user.username, member.access_level);
-}
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
 ```
 
-### Create a Forum Post
+### Create Checkout Session
 ```typescript
-const post = await client.forumPosts.create({
-  forum_id: "forum_123",
-  title: "Welcome!",
-  content: "Welcome to our community"
+const checkout = await whop.payments.createCheckoutSession({
+  planId: "plan_xxx"
 });
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ planId, id: checkout.id });
 ```
 
-### Send a DM as Agent User
+### List Receipts (Filtered to User)
 ```typescript
-await client.messages.create({
-  user_id: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  recipient_id: "user_456",
-  text: "Thanks for joining! How can we help?"
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_xxx"],
+    statuses: ['succeeded']
+  }
 });
+
+// IMPORTANT: Filter to current user only
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
 ```
 
-### List Experiences for an App
+### List Members with Filters
 ```typescript
-const experiences = await client.experiences.list({
-  app_id: "app_123"
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
 });
 
-for await (const exp of experiences) {
-  console.log(exp.id, exp.company.title);
-}
+const nodes = members?.members?.nodes ?? [];
 ```
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/api`) for app development
-2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
+1. **Always use `WhopServerSdk`** from `@whop/api` package
+2. **Use object parameters with camelCase** - `{ companyId }`, `{ experienceId }`, `{ userId }`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
 5. **Cache user permissions** to avoid excessive API calls
@@ -1264,15 +1904,16 @@ for await (const exp of experiences) {
 7. **Test paywalling** thoroughly before launch
 8. **Follow OAuth best practices** for user authentication
 9. **Monitor API rate limits** and implement backoff strategies
-10. **Use async iterators** for pagination - The SDK handles it automatically
+10. **Filter all company-wide API responses** to current user only - critical for privacy
 
 ## Notes for LLM Agents
 
 ### API Usage
-- The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/api` (REST API)
-- **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
-- **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
+- Use `WhopServerSdk` from `@whop/api` package
+- Initialize with `appId`, `appApiKey`, `onBehalfOfUserId`, `companyId`
+- **Use camelCase for parameters**: `companyId`, `experienceId`, `userId`
+- **Use object-based params**: `{ experienceId }` not positional arguments
+- Always use optional chaining (`?.`) for nested API responses
 
 ### Terminology
 - Access passes and products are the same thing
@@ -1289,21 +1930,25 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
-  apiKey: process.env.WHOP_API_KEY, // Your API key
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
-### Pagination Pattern
-The SDK uses async iterators for automatic pagination:
+### API Response Pattern
+API responses use nested structures - always check for null/undefined:
 ```typescript
-// Automatically handles pagination
-for await (const item of client.products.list()) {
-  console.log(item.id);
-}
+// Safe property access
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const nodes = receipts?.receipts?.nodes ?? [];
+
+// Filter and transform safely
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
 ```
 
 # Whop Platform Structure & API Guide
@@ -1499,92 +2144,112 @@ The GraphQL API explored in this conversation is used by Whop's internal fronten
 
 ### Creating a Whop App
 
-1. **Create the app** under your company
+1. **Initialize the SDK** in your lib/whop.ts
    ```typescript
-   import { WhopAPI } from '@whop/api';
+   import { WhopServerSdk } from '@whop/api';
+   import { env } from '~/env';
    
-   const client = new WhopAPI({
-     appID: 'app_xxxxxxxxxxxxxx',
-     apiKey: process.env.WHOP_API_KEY,
-   });
-   
-   const app = await client.apps.create({
-     name: "My App",
-     base_url: "https://myapp.com",
-     company_id: "biz_123"
+   export const whop = WhopServerSdk({
+     appId: env.NEXT_PUBLIC_WHOP_APP_ID,
+     appApiKey: env.WHOP_API_KEY,
+     onBehalfOfUserId: env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+     companyId: env.NEXT_PUBLIC_WHOP_COMPANY_ID,
    });
    ```
 
-2. **Configure app settings**
+2. **Create API routes** to interact with Whop
    ```typescript
-   await client.apps.update(app.id, {
-     base_url: "https://myapp.com",
-     base_dev_url: "http://localhost:3000",
-     base_preview_url: "https://staging.myapp.com",
-     description: "My app description",
-     icon: "attachment_id_here"
-   });
+   // app/(whop-api)/api/experience/[experienceId]/route.ts
+   import { NextRequest, NextResponse } from 'next/server';
+   import { whop } from '~/lib/whop';
+   
+   export async function GET(
+     req: NextRequest,
+     { params }: { params: Promise<{ experienceId: string }> }
+   ) {
+     const { experienceId } = await params;
+     const experience = await whop.experiences.getExperience({ experienceId });
+     return NextResponse.json(experience);
+   }
    ```
 
-3. **Submit for review**
-   - Apps must be reviewed before appearing in the App Store
-   - Once approved, other creators can install your app
+3. **Authenticate users** in protected routes
+   ```typescript
+   import { verifyUserToken } from '@whop/api';
+   
+   const { userId } = await verifyUserToken(req.headers);
+   if (!userId) {
+     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+   }
+   ```
 
-4. **Handle installations**
-   - When installed, your app receives an experience ID
-   - Use webhooks to track installations/uninstallations
-   - Configure experience-specific settings
+4. **Handle user data safely**
+   - Always verify authentication first
+   - Filter company-wide data to current user only
+   - Use optional chaining for nested properties
+   - Return minimal data to avoid privacy leaks
 
 ### Paywalling Your App
 
-1. **Create an access pass** for your app features
+1. **Create checkout endpoint** for your plans
    ```typescript
-   const product = await client.products.create({
-     title: "Premium Features",
-     company_id: "biz_123",
-     description: "Access to premium features",
-     visibility: "visible"
-   });
+   // app/(whop-api)/api/checkout/subscription/route.ts
+   import { verifyUserToken } from '@whop/api';
+   
+   export async function POST(req: NextRequest) {
+     const { userId } = await verifyUserToken(req.headers);
+     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+     const checkoutSession = await whop.payments.createCheckoutSession({
+       planId: env.SUBSCRIPTION_PLAN_ID
+     });
+
+     return NextResponse.json({
+       planId: env.SUBSCRIPTION_PLAN_ID,
+       checkoutId: checkoutSession.id,
+     });
+   }
    ```
 
-2. **Create plans** (checkout links) with pricing
+2. **Check user access** to experiences
    ```typescript
-   const plan = await client.plans.create({
-     product_id: product.id,
-     title: "Monthly Subscription",
-     plan_type: "renewal",
-     renewal_price: 29.99,
-     base_currency: "USD",
-     billing_period: 30,
-     visibility: "visible"
+   const access = await whop.access.checkIfUserHasAccessToExperience({
+     experienceId,
+     userId
+   });
+   console.log(access.accessLevel); // "admin" | "member" | "no_access"
+   ```
+
+3. **List user's receipts** to check purchases
+   ```typescript
+   const receipts = await whop.payments.listReceiptsForCompany({
+     companyId,
+     filter: {
+       accessPassIds: [planId],
+       statuses: ['succeeded']
+     }
    });
    
-   console.log('Checkout link:', plan.direct_link);
+   const userReceipts = receipts?.receipts?.nodes?.filter(
+     (r) => r?.member?.user?.id === userId
+   );
    ```
 
-3. **Check user access** in your app code
+4. **Gate features** based on subscription status
    ```typescript
-   const hasAccess = await client.users.checkAccess(userId, {
-     product_id: product.id
-   });
+   const hasActiveSubscription = userReceipts.some(
+     (r) => r.subscriptionStatus === "active"
+   );
    ```
-
-4. **Gate features** based on membership status
 
 ### Using the Agent User
 
-Apps receive `NEXT_PUBLIC_WHOP_AGENT_USER_ID` environment variable:
-- Use this to send automated DMs
-  ```typescript
-  await client.messages.create({
-    user_id: client.agentUserId, // From NEXT_PUBLIC_WHOP_AGENT_USER_ID
-    recipient_id: "user_123",
-    text: "Welcome to our community!"
-  });
-  ```
-- Build chatbots and notification systems
-- Automate welcome messages, reminders, alerts
-- Respond to user actions programmatically
+The `WhopServerSdk` is initialized with `onBehalfOfUserId` for automated actions:
+- Set to `NEXT_PUBLIC_WHOP_AGENT_USER_ID` for bot actions
+- Used for sending automated messages
+- Enables chatbots and notification systems
+
+**Note:** The agent user is configured during SDK initialization, not per-request.
 
 ## Key API Patterns
 
@@ -1604,34 +2269,34 @@ mutation createAccessPass($input: CreateAccessPassInput!) {
 
 ### REST API (Public SDK)
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: process.env.WHOP_API_KEY,
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Create product (access pass)
-const product = await client.products.create({
-  title: "Premium Membership",
-  company_id: "biz_123",
-  description: "Full access to all features",
-  visibility: "visible"
+// Verify user authentication (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
+
+// Get user info
+const user = await whop.users.getUser({ userId });
+
+// Check access
+const access = await whop.access.checkIfUserHasAccessToExperience({ 
+  experienceId, 
+  userId 
 });
 
-// Create plan
-const plan = await client.plans.create({
-  product_id: product.id,
-  title: "Monthly Plan",
-  plan_type: "renewal",
-  renewal_price: 29.99,
-  base_currency: "USD",
-  billing_period: 30,
-  visibility: "visible"
+// Create checkout session
+const checkout = await whop.payments.createCheckoutSession({ 
+  planId: "plan_xxx" 
 });
 
-// The checkout URL
-console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
+// The checkout ID for iframe SDK
+console.log(checkout.id); // Use with iframeSdk.inAppPurchase()
 ```
 
 ## Terminology Reference
@@ -1654,81 +2319,84 @@ console.log(plan.direct_link); // https://whop.com/checkout/plan_xxxxx
 
 ## Common API Examples
 
-### List Products on a Company
+### Authentication in API Routes
 ```typescript
-const products = await client.products.list({
-  company_id: "biz_123"
-});
+import { verifyUserToken } from '@whop/api';
 
-for await (const product of products) {
-  console.log(product.id, product.title);
+export async function GET(req: NextRequest) {
+  const { userId } = await verifyUserToken(req.headers);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Proceed with authenticated request
 }
 ```
 
-### List Plans for a Product
+### Get Experience Data
 ```typescript
-const plans = await client.plans.list({
-  product_id: "prod_xyz789"
+const experience = await whop.experiences.getExperience({ 
+  experienceId: "exp_xxx" 
 });
-
-for await (const plan of plans) {
-  console.log(plan.id, plan.direct_link);
-}
+console.log(experience.name, experience.company.title);
 ```
 
-### Update a Plan
+### Get User Data
 ```typescript
-await client.plans.update("plan_abc123", {
-  title: "Updated Monthly Plan",
-  renewal_price: 39.99,
-  visibility: "visible"
-});
+const user = await whop.users.getUser({ userId });
+console.log(user.name, user.username, user.email);
 ```
 
-### List Members of a Company
+### Check User Access
 ```typescript
-const members = await client.members.list({
-  company_id: "biz_123"
+const access = await whop.access.checkIfUserHasAccessToExperience({
+  experienceId: "exp_xxx",
+  userId: "user_xxx"
 });
-
-for await (const member of members) {
-  console.log(member.user.username, member.access_level);
-}
+console.log(access.accessLevel); // "admin" | "member" | "no_access"
 ```
 
-### Create a Forum Post
+### Create Checkout Session
 ```typescript
-const post = await client.forumPosts.create({
-  forum_id: "forum_123",
-  title: "Welcome!",
-  content: "Welcome to our community"
+const checkout = await whop.payments.createCheckoutSession({
+  planId: "plan_xxx"
 });
+
+// Use with iframe SDK
+iframeSdk.inAppPurchase({ planId, id: checkout.id });
 ```
 
-### Send a DM as Agent User
+### List Receipts (Filtered to User)
 ```typescript
-await client.messages.create({
-  user_id: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
-  recipient_id: "user_456",
-  text: "Thanks for joining! How can we help?"
+const receipts = await whop.payments.listReceiptsForCompany({
+  companyId,
+  filter: {
+    accessPassIds: ["prod_xxx"],
+    statuses: ['succeeded']
+  }
 });
+
+// IMPORTANT: Filter to current user only
+const userReceipts = receipts?.receipts?.nodes?.filter(
+  (r) => r?.member?.user?.id === userId
+);
 ```
 
-### List Experiences for an App
+### List Members with Filters
 ```typescript
-const experiences = await client.experiences.list({
-  app_id: "app_123"
+const members = await whop.companies.listMembers({
+  companyId,
+  filters: {
+    accessPassIds: ["prod_xxx"]
+  }
 });
 
-for await (const exp of experiences) {
-  console.log(exp.id, exp.company.title);
-}
+const nodes = members?.members?.nodes ?? [];
 ```
 
 ## Best Practices
 
-1. **Always use the public REST API** (`@whop/api`) for app development
-2. **Use snake_case for property names** - The REST API uses `company_id`, not `companyId`
+1. **Always use `WhopServerSdk`** from `@whop/api` package
+2. **Use object parameters with camelCase** - `{ companyId }`, `{ experienceId }`, `{ userId }`
 3. **Handle webhooks** to stay in sync with installations and payments
 4. **Implement proper error handling** for API calls
 5. **Cache user permissions** to avoid excessive API calls
@@ -1736,15 +2404,16 @@ for await (const exp of experiences) {
 7. **Test paywalling** thoroughly before launch
 8. **Follow OAuth best practices** for user authentication
 9. **Monitor API rate limits** and implement backoff strategies
-10. **Use async iterators** for pagination - The SDK handles it automatically
+10. **Filter all company-wide API responses** to current user only - critical for privacy
 
 ## Notes for LLM Agents
 
 ### API Usage
-- The internal GraphQL API discussed in this conversation is NOT for public use
-- When building Whop apps, ONLY use `@whop/api` (REST API)
-- **REST API uses snake_case** for all property names: `company_id`, `base_url`, `product_id`, etc.
-- **GraphQL API uses camelCase**: `companyId`, `baseUrl`, `productId`, etc.
+- Use `WhopServerSdk` from `@whop/api` package
+- Initialize with `appId`, `appApiKey`, `onBehalfOfUserId`, `companyId`
+- **Use camelCase for parameters**: `companyId`, `experienceId`, `userId`
+- **Use object-based params**: `{ experienceId }` not positional arguments
+- Always use optional chaining (`?.`) for nested API responses
 
 ### Terminology
 - Access passes and products are the same thing
@@ -1761,24 +2430,31 @@ for await (const exp of experiences) {
 
 ### SDK Initialization
 ```typescript
-import { WhopAPI } from '@whop/api';
+import { WhopServerSdk } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',    // Your app ID
-  apiKey: process.env.WHOP_API_KEY, // Your API key
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 ```
 
-### Pagination Pattern
-The SDK uses async iterators for automatic pagination:
+### API Response Pattern
+API responses use nested structures - always check for null/undefined:
 ```typescript
-// Automatically handles pagination
-for await (const item of client.products.list()) {
-  console.log(item.id);
-}
+// Safe property access
+const receipts = await whop.payments.listReceiptsForCompany({ companyId, filter });
+const nodes = receipts?.receipts?.nodes ?? [];
+
+// Filter and transform safely
+const userReceipts = nodes.filter((r) => r?.member?.user?.id === userId);
 ```
 
-
+---
+description: The list of whop rest api endpoints and their usage.
+alwaysApply: false
+---
 # Whop REST API - Complete Endpoint Reference
 
 Source: https://docs.whop.com/api-reference/apps/list-apps
@@ -1969,27 +2645,32 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 
 ```bash
 npm install @whop/api
+# or
+bun add @whop/api
 ```
 
 ## Basic Usage
 
-```javascript
-import { WhopAPI } from '@whop/api';
+```typescript
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: 'your-api-key',
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Example: List products
-const products = await client.products.list();
+// Example: Get experience
+const experience = await whop.experiences.getExperience({ experienceId });
 
-// Example: Create a plan
-const plan = await client.plans.create({
-  product_id: 'prod_xxxxx',
-  price: 29.99,
-  interval: 'month'
+// Example: Create checkout session
+const checkout = await whop.payments.createCheckoutSession({
+  planId: 'plan_xxxxx'
 });
+
+// Example: Verify user (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
 ```
 
 ## Authentication
@@ -2255,27 +2936,32 @@ Source: https://docs.whop.com/api-reference/apps/list-apps
 
 ```bash
 npm install @whop/api
+# or
+bun add @whop/api
 ```
 
 ## Basic Usage
 
-```javascript
-import { WhopAPI } from '@whop/api';
+```typescript
+import { WhopServerSdk, verifyUserToken } from '@whop/api';
 
-const client = new WhopAPI({
-  appID: 'app_xxxxxxxxxxxxxx',
-  apiKey: 'your-api-key',
+export const whop = WhopServerSdk({
+  appId: process.env.NEXT_PUBLIC_WHOP_APP_ID,
+  appApiKey: process.env.WHOP_API_KEY,
+  onBehalfOfUserId: process.env.NEXT_PUBLIC_WHOP_AGENT_USER_ID,
+  companyId: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID,
 });
 
-// Example: List products
-const products = await client.products.list();
+// Example: Get experience
+const experience = await whop.experiences.getExperience({ experienceId });
 
-// Example: Create a plan
-const plan = await client.plans.create({
-  product_id: 'prod_xxxxx',
-  price: 29.99,
-  interval: 'month'
+// Example: Create checkout session
+const checkout = await whop.payments.createCheckoutSession({
+  planId: 'plan_xxxxx'
 });
+
+// Example: Verify user (import verifyUserToken separately)
+const { userId } = await verifyUserToken(req.headers);
 ```
 
 ## Authentication
