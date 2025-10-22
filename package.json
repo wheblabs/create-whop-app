@@ -1,42 +1,16 @@
 {
   "name": "create-whop-app",
-  "version": "1.4.2",
-  "description": "The best way to create a whop app",
-  "keywords": [
-    "whop",
-    "whop-app",
-    "create-whop-app"
-  ],
-  "homepage": "https://github.com/wheblabs/create-whop-app#readme",
-  "bugs": {
-    "url": "https://github.com/wheblabs/create-whop-app/issues"
-  },
+  "version": "1.4.3",
+  "author": "Constantine & Whop Labs",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/wheblabs/create-whop-app.git"
-  },
-  "license": "MIT",
-  "author": "Constantine & Whop Labs",
-  "type": "module",
-  "bin": {
-    "create-whop-app": "./dist/index.js"
-  },
-  "files": [
-    "dist",
-    "templates",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "bun build ./src/index.ts --target node --outfile ./dist/index.js && chmod +x ./dist/index.js",
-    "prepublishOnly": "bun run build",
-    "lint": "biome check .",
-    "format": "biome format --write ."
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.6",
     "@types/bun": "^1.3.0",
     "@types/cli-progress": "^3.11.6",
+    "@whoplabs/whop-client": "^0.1.2",
     "bun-types": "^1.2.23",
     "chalk": "^5.6.2",
     "cli-progress": "^3.12.0",
@@ -45,13 +19,37 @@
     "prettier": "3.6.2",
     "typescript": "^5.9.3"
   },
+  "bin": {
+    "create-whop-app": "./dist/index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/wheblabs/create-whop-app/issues"
+  },
+  "description": "The best way to create a whop app",
   "engines": {
     "node": ">=22.0.0"
   },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/wheblabs/create-whop-app#readme",
+  "keywords": [
+    "whop",
+    "whop-app",
+    "create-whop-app"
+  ],
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@whoplabs/whop-client": "0.1.1"
-  }
+  "scripts": {
+    "build": "bun build ./src/index.ts --target node --outfile ./dist/index.js && chmod +x ./dist/index.js",
+    "prepublishOnly": "bun run build",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "type": "module"
 }
