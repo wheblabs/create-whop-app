@@ -446,6 +446,7 @@ async function main() {
 					const child = spawn(installCommand, installArgs, {
 						cwd: dest,
 						stdio: 'pipe',
+						shell: true,
 					})
 
 					let installedCount = 0
@@ -586,9 +587,15 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 		// Open browser after a short delay to let the server start
 		setTimeout(() => {
 			try {
-				execSync(`open "${appUrl}"`, { stdio: 'ignore' })
+				// Cross-platform browser opening
+				const command = process.platform === 'win32' 
+					? `start "" "${appUrl}"` 
+					: process.platform === 'darwin' 
+					? `open "${appUrl}"` 
+					: `xdg-open "${appUrl}"`
+				execSync(command, { stdio: 'ignore', shell: true })
 			} catch {
-				// Ignore errors if 'open' command is not available
+				// Ignore errors if command is not available
 			}
 		}, 2000)
 	}
@@ -602,6 +609,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 	const dev = spawn(command, args, {
 		cwd: dest,
 		stdio: 'inherit' as const,
+		shell: true,
 	})
 
 	await new Promise<void>((resolve) => {
