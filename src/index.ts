@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execSync, spawn } from 'node:child_process'
-import { lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -41,32 +41,15 @@ function getInstallCommand(pm: string): string {
 }
 
 async function copyTemplate(templateDir: string, dest: string): Promise<void> {
-	// Use shell cp -r to copy all files including hidden ones
-	execSync(`cp -r "${templateDir}"/* "${dest}"`, { stdio: 'ignore' })
-
-	// Copy dotfiles and dot-directories explicitly (cp /* doesn't match hidden files)
-	const dotfiles = ['.gitignore', '.prettierrc']
-	const dotdirs = ['.cursor', '.vscode']
-
-	for (const dotfile of dotfiles) {
-		const srcPath = join(templateDir, dotfile)
-		const destPath = join(dest, dotfile)
-		try {
-			execSync(`cp "${srcPath}" "${destPath}"`, { stdio: 'ignore' })
-		} catch {
-			// File doesn't exist in template, skip it
-		}
-	}
-
-	for (const dotdir of dotdirs) {
-		const srcPath = join(templateDir, dotdir)
-		const destPath = join(dest, dotdir)
-		try {
-			execSync(`cp -r "${srcPath}" "${destPath}"`, { stdio: 'ignore' })
-		} catch {
-			// Directory doesn't exist in template, skip it
-		}
-	}
+	// Use Node's built-in cpSync for cross-platform compatibility
+	cpSync(templateDir, dest, {
+		recursive: true,
+		filter: (src) => {
+			// Skip node_modules if present in template
+			const basename = src.split(/[\\/]/).pop() || ''
+			return basename !== 'node_modules'
+		},
+	})
 }
 
 interface AddonConfig {
@@ -92,19 +75,15 @@ async function applyAddon(addonPath: string, dest: string): Promise<AddonConfig>
 		const parentDir = dirname(destPath)
 		mkdirSync(parentDir, { recursive: true })
 
-		// Copy files
-		if (filePattern.includes('/**')) {
-			// Copy directory recursively
-			try {
-				execSync(`cp -r "${srcPath}" "${dirname(destPath)}"`, {
-					stdio: 'ignore',
-				})
-			} catch {
-				// Directory might not exist yet
-			}
-		} else {
-			// Copy single file
-			execSync(`cp "${srcPath}" "${destPath}"`, { stdio: 'ignore' })
+		// Copy files using Node's built-in cpSync for cross-platform compatibility
+		try {
+			cpSync(srcPath, destPath, {
+				recursive: filePattern.includes('/**'),
+				errorOnExist: false,
+				force: true,
+			})
+		} catch {
+			// File/directory might not exist, skip it
 		}
 	}
 
