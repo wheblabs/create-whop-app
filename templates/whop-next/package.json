@@ -7,7 +7,11 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "typegen": "next typegen"
+    "typegen": "next typegen",
+    "whopctl": "whopctl",
+    "deploy": "whopctl deploy",
+    "status": "whopctl status",
+    "logs": "whopctl logs app --follow"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",
@@ -28,6 +32,7 @@
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@whoplabs/whopctl": "^1.6.7",
     "eslint": "^9.38.0",
     "eslint-config-next": "15.5.6",
     "tailwindcss": "^4.1.16",

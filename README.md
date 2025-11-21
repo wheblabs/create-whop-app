@@ -18,6 +18,18 @@ bunx create-whop-app@latest
 yarn create whop-app
 ```
 
+### Ships with WhopCTL
+
+Every generated project automatically installs [`@whoplabs/whopctl`](https://www.npmjs.com/package/@whoplabs/whopctl) and exposes a few package scripts so you can deploy immediately:
+
+```
+npm run deploy   # whopctl deploy
+npm run status   # whopctl status
+npm run logs     # whopctl logs app --follow
+```
+
+Because `create-whop-app` signs you into Whop before scaffolding, the CLI picks up the same session and “just works”.
+
 ## Features
 
 - Automated Whop authentication with OTP

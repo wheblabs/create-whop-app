@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process'
+import { execSync, spawn, spawnSync } from 'node:child_process'
+import type { ExecSyncOptions } from 'node:child_process'
 import { cpSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -115,6 +116,32 @@ async function applyAddon(addonPath: string, dest: string): Promise<AddonConfig>
   writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
 
   return config
+}
+
+function getProjectWhopctlVersion(projectDir: string): string | undefined {
+	try {
+		const pkgPath = join(projectDir, 'node_modules', '@whoplabs', 'whopctl', 'package.json')
+		const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+		return pkg.version as string
+	} catch {
+		return undefined
+	}
+}
+
+function detectGlobalWhopctl(): { version?: string } {
+	try {
+		const result = spawnSync('whopctl', ['--version'], {
+			encoding: 'utf-8',
+		})
+
+		if (result.status === 0 && result.stdout) {
+			return { version: result.stdout.trim() }
+		}
+	} catch {
+		// Command not found or failed, ignore
+	}
+
+	return {}
 }
 
 async function main() {
@@ -540,16 +567,48 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
   await tasks.run()
 
-  // Get app URL
-  const appUrl = await whop.apps.getUrl(app.id, installCompanyId)
+	const localWhopctlVersion = getProjectWhopctlVersion(dest)
+	const globalWhopctl = detectGlobalWhopctl()
 
-  console.log('')
-  console.log(chalk.hex(ORANGE).bold('✓ Setup Complete!'))
-  console.log('')
-  console.log(chalk.hex(ORANGE)(`App: ${name.trim()}`))
-  console.log(chalk.hex(ORANGE)(`Company: ${createCompanyData.title}`))
-  console.log(chalk.hex(ORANGE)(`URL: ${appUrl}`))
-  console.log('')
+	// Get app URL
+	const appUrl = await whop.apps.getUrl(app.id, installCompanyId)
+
+	console.log('')
+	console.log(chalk.hex(ORANGE).bold('✓ Setup Complete!'))
+	console.log('')
+	console.log(chalk.hex(ORANGE)(`App: ${name.trim()}`))
+	console.log(chalk.hex(ORANGE)(`Company: ${createCompanyData.title}`))
+	console.log(chalk.hex(ORANGE)(`URL: ${appUrl}`))
+	console.log('')
+	console.log(chalk.hex(ORANGE)('Whop CLI ready to go'))
+	console.log(chalk.dim('  whopctl deploy   # builds & ships your app'))
+	console.log(chalk.dim('  whopctl status   # tail build progress'))
+	console.log(chalk.dim('  whopctl logs app --follow   # live runtime logs'))
+	console.log(chalk.dim('  whopctl --help    # full command list'))
+	console.log('')
+
+	if (!globalWhopctl.version) {
+		console.log(
+			chalk.yellow(
+				'⚠ No global whopctl detected. Use the npm scripts above or install it globally:',
+			),
+		)
+		console.log(chalk.dim('   npm install -g @whoplabs/whopctl'))
+		console.log('')
+	} else if (
+		localWhopctlVersion &&
+		globalWhopctl.version.trim() !== localWhopctlVersion.trim()
+	) {
+		console.log(
+			chalk.yellow(
+				`⚠ Global whopctl is ${globalWhopctl.version}, but this project installed ${localWhopctlVersion}.`,
+			),
+		)
+		console.log(
+			chalk.dim('   Update it with npm install -g @whoplabs/whopctl@latest or use the npm scripts above.'),
+		)
+		console.log('')
+	}
 
   // Show Supabase setup instructions if selected
   if (databaseType === 'supabase') {
@@ -585,22 +644,24 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
   // Change to project directory and start dev server
   process.chdir(dest)
 
-  if (openBrowser) {
-    // Open browser after a short delay to let the server start
-    setTimeout(() => {
-      try {
-        // Cross-platform browser opening
-        const command = process.platform === 'win32'
-          ? `start "" "${appUrl}"`
-          : process.platform === 'darwin'
-            ? `open "${appUrl}"`
-            : `xdg-open "${appUrl}"`
-        execSync(command, { stdio: 'ignore', shell: true })
-      } catch {
-        // Ignore errors if command is not available
-      }
-    }, 2000)
-  }
+	if (openBrowser) {
+		// Open browser after a short delay to let the server start
+		setTimeout(() => {
+			try {
+				// Cross-platform browser opening
+				const openCommand =
+					process.platform === 'win32'
+						? `start "" "${appUrl}"`
+						: process.platform === 'darwin'
+						? `open "${appUrl}"`
+						: `xdg-open "${appUrl}"`
+				const openOptions: ExecSyncOptions = { stdio: 'ignore' }
+				execSync(openCommand, openOptions)
+			} catch {
+				// Ignore errors if command is not available
+			}
+		}, 2000)
+	}
 
   // Use the same package manager to run dev
   const runCmd = packageManager === 'npm' ? 'npm run dev' : `${packageManager} dev`
