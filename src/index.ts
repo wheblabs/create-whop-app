@@ -527,8 +527,6 @@ async function main() {
       task: async (ctx) => {
         credentials = await whop.apps.getCredentials(ctx.app.id, createCompany)
 
-        console.log('token:', JSON.stringify(credentials, null, 2))
-
         const envContent = [
           `WHOP_API_KEY=${credentials.apiKey.token}`,
           `NEXT_PUBLIC_WHOP_APP_ID=${credentials.id}`,
