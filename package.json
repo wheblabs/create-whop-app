@@ -1,6 +1,6 @@
 {
-  "name": "@whoplabs/create-whop-app",
-  "version": "2.0.8",
+  "name": "create-whop-app",
+  "version": "2.0.9",
   "author": "Whop Labs",
   "repository": {
     "type": "git",
