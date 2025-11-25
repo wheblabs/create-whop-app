@@ -1,10 +1,11 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "create-whop-app",
       "dependencies": {
-        "@whoplabs/whop-client": "0.5.1",
+        "@whoplabs/whop-client": "^0.5.3",
         "listr2": "^9.0.5",
       },
       "devDependencies": {
@@ -44,7 +45,7 @@
 
     "@types/react": ["@types/react@19.2.6", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-p/jUvulfgU7oKtj6Xpk8cA2Y1xKTtICGpJYeJXz2YVO2UcvjQgeRMLDGfDeqeRW2Ta+0QNFwcc8X3GH8SxZz6w=="],
 
-    "@whoplabs/whop-client": ["@whoplabs/whop-client@0.5.1", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-rpZI3NcwFnGq/q5GHEEvnv4bdElHitBtBCFhhjYS5nhBNcPob0bubfQ3M14t51mpYhQlmNwQBu+CRfj8HgIZZw=="],
+    "@whoplabs/whop-client": ["@whoplabs/whop-client@0.5.3", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-N3ZaKCi1HcGhtptUSm0xe0HUv7KVJ05YXUYn/iHzQWdVqxC5QlMG4moz0mS3DWFZ4bfuSvF7NHEU35lz6DzDbQ=="],
 
     "ansi-colors": ["ansi-colors@4.1.3", "", {}, "sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw=="],
 

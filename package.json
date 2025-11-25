@@ -1,6 +1,6 @@
 {
   "name": "create-whop-app",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "author": "Whop Labs",
   "repository": {
     "type": "git",
@@ -50,7 +50,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@whoplabs/whop-client": "^0.5.1",
+    "@whoplabs/whop-client": "^0.5.3",
     "listr2": "^9.0.5"
   }
 }
