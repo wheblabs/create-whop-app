@@ -5,8 +5,12 @@ import type { WhopAccess, WhopExperience, WhopUser } from '~/lib/whop'
 export const serverQueryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: 60 * 1000, // 1 minute
+			// Reduce staleTime to ensure data is refetched after deployments
+			// Set to 0 for iframe contexts to always get fresh data
+			staleTime: 0, // Always refetch on mount
+			gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (formerly cacheTime)
 			retry: 1,
+			refetchOnWindowFocus: true, // Refetch when iframe gains focus
 		},
 		dehydrate: {
 			shouldDehydrateQuery: (query) =>
@@ -62,6 +66,8 @@ export const whopExperienceQuery = (experienceId: string) => ({
 	queryFn: async () => {
 		const response = await fetch(getApiUrl(`/api/experience/${experienceId}`), {
 			headers: await getServerHeaders(),
+			// Bypass Next.js fetch cache to ensure fresh data after deployments
+			cache: 'no-store',
 		})
 		if (!response.ok) throw new Error('Failed to fetch whop experience')
 		const result = (await response.json()) as WhopExperience
@@ -74,6 +80,7 @@ export const whopUserQuery = (experienceId: string) => ({
 	queryFn: async () => {
 		const response = await fetch(getApiUrl(`/api/experience/${experienceId}/user`), {
 			headers: await getServerHeaders(),
+			cache: 'no-store',
 		})
 		if (!response.ok) throw new Error('Failed to fetch whop user')
 		return response.json() as Promise<{ user: WhopUser; access: WhopAccess }>
@@ -85,6 +92,7 @@ export const receiptsQuery = () => ({
 	queryFn: async () => {
 		const response = await fetch(getApiUrl('/api/receipts'), {
 			headers: await getServerHeaders(),
+			cache: 'no-store',
 		})
 		if (!response.ok) throw new Error('Failed to fetch receipts')
 		return response.json() as Promise<{
