@@ -51,7 +51,7 @@
   "scripts": {
     "build": "bun build ./src/index.ts --target node --outfile ./dist/index.js && chmod +x ./dist/index.js",
     "prepublishOnly": "bun run build",
-    "lint": "biome check .",
+    "lint": "biome check src",
     "format": "biome format --write ."
   },
   "type": "module",

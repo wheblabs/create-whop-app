@@ -8,12 +8,8 @@ const ORANGE = '#FFA500'
 
 export async function authStep(whop: Whop): Promise<void> {
 	console.log(chalk.hex(ORANGE).bold('Authentication Required'))
-	console.log(
-		chalk.dim("Don't have a Whop account? Sign up at https://whop.com/signup"),
-	)
-	console.log(
-		chalk.dim('Your session will be saved to ~/.whoplabs/whop-session.json'),
-	)
+	console.log(chalk.dim("Don't have a Whop account? Sign up at https://whop.com/signup"))
+	console.log(chalk.dim('Your session will be saved to ~/.whoplabs/whop-session.json'))
 	console.log('')
 
 	// Get email from user
@@ -32,9 +28,7 @@ export async function authStep(whop: Whop): Promise<void> {
 
 	// Clear line and show completion
 	process.stdout.write('\x1b[1A\x1b[2K')
-	console.log(
-		`${chalk.green('✔')} ${chalk.dim('Enter your Whop email:')} ${chalk.dim(email)}`,
-	)
+	console.log(`${chalk.green('✔')} ${chalk.dim('Enter your Whop email:')} ${chalk.dim(email)}`)
 
 	if (!email) {
 		console.error(chalk.red('Email is required.'))
@@ -128,9 +122,7 @@ export async function authStep(whop: Whop): Promise<void> {
 		const { retry } = await prompt<{ retry: string }>({
 			type: 'select',
 			name: 'retry',
-			message: chalk.hex(ORANGE)(
-				'The code was incorrect or expired. What would you like to do?',
-			),
+			message: chalk.hex(ORANGE)('The code was incorrect or expired. What would you like to do?'),
 			prefix: chalk.hex(ORANGE)('?'),
 			choices: [
 				{ name: 'code', message: 'Try another code' },
@@ -164,10 +156,7 @@ export async function authStep(whop: Whop): Promise<void> {
 	}
 }
 
-async function retryCodeVerification(
-	whop: Whop,
-	ticket: string,
-): Promise<void> {
+async function retryCodeVerification(whop: Whop, ticket: string): Promise<void> {
 	const codeResponse = await prompt<{ code: string }>({
 		type: 'input',
 		name: 'code',
@@ -207,9 +196,7 @@ async function retryCodeVerification(
 		const { retry } = await prompt<{ retry: string }>({
 			type: 'select',
 			name: 'retry',
-			message: chalk.hex(ORANGE)(
-				'The code was incorrect or expired. What would you like to do?',
-			),
+			message: chalk.hex(ORANGE)('The code was incorrect or expired. What would you like to do?'),
 			prefix: chalk.hex(ORANGE)('?'),
 			choices: [
 				{ name: 'code', message: 'Try another code' },
