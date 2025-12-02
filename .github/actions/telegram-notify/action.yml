@@ -7,6 +7,10 @@ inputs:
   chat-id:
     description: 'Telegram chat ID'
     required: true
+  thread-id:
+    description: 'Telegram topic thread ID (for forum groups)'
+    required: false
+    default: '7539'
   status:
     description: 'Job status'
     required: true
@@ -22,6 +26,7 @@ runs:
       run: |
         curl -s -X POST "https://api.telegram.org/bot${{ inputs.bot-token }}/sendMessage" \
           -d chat_id="${{ inputs.chat-id }}" \
+          -d message_thread_id="${{ inputs.thread-id }}" \
           -d parse_mode="HTML" \
           -d text="🚨 <b>${{ inputs.workflow }} Failed</b>%0A%0ARepo: ${{ github.repository }}%0A%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Run</a>"
 
