@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/wheblabs/create-whop-app/compare/v1.0.0...v1.1.0) (2025-12-02)
+
+### Features
+
+* add smoke testing with Telegram notifications ([7c74410](https://github.com/wheblabs/create-whop-app/commit/7c74410d009dc26749279a53c49660cbe3603df2))
+
 ## 1.0.0 (2025-12-02)
 
 ### Features
