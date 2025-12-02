@@ -1,0 +1,27 @@
+name: 'Telegram Notify'
+description: 'Send Telegram notification on workflow failure'
+inputs:
+  bot-token:
+    description: 'Telegram bot token'
+    required: true
+  chat-id:
+    description: 'Telegram chat ID'
+    required: true
+  status:
+    description: 'Job status'
+    required: true
+  workflow:
+    description: 'Workflow name for the message'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Send Telegram notification
+      if: ${{ inputs.status == 'failure' }}
+      shell: bash
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ inputs.bot-token }}/sendMessage" \
+          -d chat_id="${{ inputs.chat-id }}" \
+          -d parse_mode="HTML" \
+          -d text="🚨 <b>${{ inputs.workflow }} Failed</b>%0A%0ARepo: ${{ github.repository }}%0A%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Run</a>"
+
