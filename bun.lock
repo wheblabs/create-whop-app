@@ -5,7 +5,7 @@
     "": {
       "name": "create-whop-app",
       "dependencies": {
-        "@whoplabs/whop-client": "^1.1.0",
+        "@whoplabs/whop-client": "^1.2.0",
         "listr2": "^9.0.5",
       },
       "devDependencies": {
@@ -143,7 +143,7 @@
 
     "@types/react": ["@types/react@19.2.6", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-p/jUvulfgU7oKtj6Xpk8cA2Y1xKTtICGpJYeJXz2YVO2UcvjQgeRMLDGfDeqeRW2Ta+0QNFwcc8X3GH8SxZz6w=="],
 
-    "@whoplabs/whop-client": ["@whoplabs/whop-client@1.1.0", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-SVZDR9yFFE4qUhC9i9G6b95aX8QV7Shhy6NXtKYmwfrk6hDTYCSmvKKGScjJQ8NMR78zkBy8CGNYSIpyI8G79A=="],
+    "@whoplabs/whop-client": ["@whoplabs/whop-client@1.2.0", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-YbLP7uVAICr91KWkcCWPBX5aLB9mpdXSOKZFnq8xa5ig9AsM2ymtHfYUcLgFDtIkkOsWa8L9k4KmPuHExA1+nQ=="],
 
     "JSONStream": ["JSONStream@1.3.5", "", { "dependencies": { "jsonparse": "^1.2.0", "through": ">=2.2.7 <3" }, "bin": { "JSONStream": "./bin.js" } }, "sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ=="],
 
