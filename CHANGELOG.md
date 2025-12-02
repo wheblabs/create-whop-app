@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/wheblabs/create-whop-app/compare/v1.1.0...v1.2.0) (2025-12-02)
+
+### Features
+
+* send Telegram alerts to Whop Alerts topic (thread 7539) ([172579a](https://github.com/wheblabs/create-whop-app/commit/172579add5c5dce74da28e592f0bbf6c757a9a1f))
+
 ## [1.1.0](https://github.com/wheblabs/create-whop-app/compare/v1.0.0...v1.1.0) (2025-12-02)
 
 ### Features
