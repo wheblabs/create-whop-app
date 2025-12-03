@@ -540,6 +540,15 @@ async function main() {
 					``,
 					`# Project path for "Open in Cursor" button`,
 					`NEXT_PUBLIC_PROJECT_PATH=${dest}`,
+					``,
+					`# =============================================================================`,
+					`# WhopShip Deployment (optional - for deploying to WhopShip hosting)`,
+					`# =============================================================================`,
+					`# Your app can be deployed to WhopShip for production hosting.`,
+					`# Run: whopctl deploy to deploy your app`,
+					`# Run: whopctl status to check deployment status`,
+					`# Run: whopctl env push to sync environment variables`,
+					`# See docs/whopship.md for more information`,
 				].join('\n')
 
 				let finalEnvContent = envContent

@@ -13,6 +13,67 @@ whopctl login
 
 # Deploy your app
 whopctl deploy
+
+# Check deployment status
+whopctl status
+```
+
+## CLI Commands Reference
+
+### Deployment
+
+```bash
+whopctl deploy              # Deploy current directory
+whopctl deploy --background # Deploy without waiting for completion
+whopctl status              # Check deployment status
+whopctl status --logs       # View status with build logs
+whopctl status --follow     # Stream logs in real-time
+```
+
+### Environment Variables
+
+```bash
+whopctl env list              # List all env vars (values masked)
+whopctl env set KEY=value     # Set a single env var
+whopctl env set KEY=value --build  # Expose to build process
+whopctl env delete KEY        # Remove an env var
+whopctl env push              # Push local .env to WhopShip
+whopctl env pull              # Pull env vars to local .env
+```
+
+### Rollback
+
+```bash
+whopctl rollback             # Rollback to previous deployment
+whopctl rollback --list      # List available rollback targets
+whopctl rollback --to <id>   # Rollback to specific build
+```
+
+### Custom Domains
+
+```bash
+whopctl domains list                # List custom domains
+whopctl domains add example.com     # Add a custom domain
+whopctl domains verify example.com  # Check DNS verification
+whopctl domains remove example.com  # Remove a domain
+```
+
+### Build Management
+
+```bash
+whopctl builds list          # List recent builds
+whopctl builds logs          # View structured build logs
+whopctl builds logs --follow # Stream logs in real-time
+whopctl cancel <buildId>     # Cancel a build
+```
+
+### Usage & Billing
+
+```bash
+whopctl usage                # View usage analytics
+whopctl billing current      # Current period usage
+whopctl billing history      # Historical usage
+whopctl tier current         # View current tier
 ```
 
 ## Architecture Overview
