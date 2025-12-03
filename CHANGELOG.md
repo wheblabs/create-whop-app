@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/wheblabs/create-whop-app/compare/v1.3.0...v1.3.1) (2025-12-03)
+
+### Bug Fixes
+
+* add .gitattributes to enforce LF line endings on all platforms ([f1e5aa1](https://github.com/wheblabs/create-whop-app/commit/f1e5aa1e425096b8b88dfdc9f4ba9b4d876161b4))
+
 ## [1.3.0](https://github.com/wheblabs/create-whop-app/compare/v1.2.0...v1.3.0) (2025-12-03)
 
 ### Features
