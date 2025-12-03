@@ -208,6 +208,17 @@ If you selected Supabase, you'll also have:
 - [Drizzle ORM Documentation](https://orm.drizzle.team)
 - [Supabase Documentation](https://supabase.com/docs) (if using Supabase)
 
+## Best Practices
+
+See [docs/api-best-practices.md](docs/api-best-practices.md) for important guidelines on:
+- **Response size limits** - Whop iframe proxy ~168KB limit
+- **Pagination patterns** - Always default to 10 items or less
+- **Payload optimization** - Minimize response sizes
+- **Infinite queries** - Implementing seamless pagination
+- **Testing strategies** - Catching truncation issues early
+
+**Critical**: Whop apps run in iframes with a CloudFlare proxy layer that truncates responses at ~168KB. Always design APIs with small page sizes and minimal payloads.
+
 ## Support
 
 For issues or questions:
