@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/wheblabs/create-whop-app/compare/v1.2.0...v1.3.0) (2025-12-03)
+
+### Features
+
+* add WhopShip deployment guidance with whopctl commands ([0378dd3](https://github.com/wheblabs/create-whop-app/commit/0378dd321f22949cdef587e80cbd18bd26d83417))
+
 ## [1.2.0](https://github.com/wheblabs/create-whop-app/compare/v1.1.0...v1.2.0) (2025-12-02)
 
 ### Features
