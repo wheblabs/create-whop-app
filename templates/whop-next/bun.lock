@@ -23,7 +23,7 @@
         "@types/node": "^24.9.1",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.2",
-        "@whoplabs/whopctl": "^1.6.7-99",
+        "@whoplabs/whopctl": "~1.4.0",
         "eslint": "^9.38.0",
         "eslint-config-next": "15.5.6",
         "tailwindcss": "^4.1.16",
@@ -792,9 +792,9 @@
 
     "@whop/sdk": ["@whop/sdk@0.0.1-canary.0", "", { "dependencies": { "jose": "^6.1.0", "standardwebhooks": "^1.0.0" } }, "sha512-1Wujap0qXap4LFm0ce5FGNeoukeCx8ogHR4Ps2lp4MdPKtSB1DwNV1qsAtb1QYucVMv66VBYW2Yzt7d4vbTnLA=="],
 
-    "@whoplabs/whop-client": ["@whoplabs/whop-client@0.6.0", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-kh+LrCnVm4akB9UZDWMCZUn+67ZhsNXlglQzMal+Sx1H5c74ADXzeJUNnBhnoDLDtOM4e4Gv/4DTnx3u8sdlnQ=="],
+    "@whoplabs/whop-client": ["@whoplabs/whop-client@1.3.0", "", { "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-k7FtazZPWdeEh5NoCFjZ7Lxd7W6HSZAgNm/ijlzYT7sXD1FL1qnXPJcd1iuIi6i6/Z8Spvg+cTLPPOZ9gL9Bvw=="],
 
-    "@whoplabs/whopctl": ["@whoplabs/whopctl@1.7.0", "", { "dependencies": { "@aws-sdk/client-cloudwatch-logs": "^3.929.0", "@whoplabs/whop-client": "^0.6.0", "adm-zip": "^0.5.16", "tar": "^7.5.1" }, "peerDependencies": { "typescript": "^5" }, "bin": { "whopctl": "dist/index.js" } }, "sha512-iLk/owLCKFYG5bWKhwqrYab20NzV4MFm1eIcwKAXLkw0hPNpfwRZmf8vP3sliSSSSGr1Pkygba0o1jz0bDNm/g=="],
+    "@whoplabs/whopctl": ["@whoplabs/whopctl@1.4.0", "", { "dependencies": { "@aws-sdk/client-cloudwatch-logs": "^3.929.0", "@whoplabs/whop-client": "^1.3.0", "adm-zip": "^0.5.16", "tar": "^7.5.1" }, "peerDependencies": { "typescript": "^5" }, "bin": { "whopctl": "dist/index.js" } }, "sha512-SwDeC2Ylqi/Z5UyFFLDB0587KYUBfma8WrFjiYdiu02r/70oudDhmeW58YKSdDH50erKCvKtWAjdOQ1+lWTouQ=="],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
